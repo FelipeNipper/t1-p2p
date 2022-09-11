@@ -5,6 +5,7 @@ import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
+import java.rmi.Naming;
 
 public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface {
 
@@ -13,9 +14,21 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	// mapa de ip+port que devolve quanto tempo o peer esta sem mandar KeepAlive
 	protected HashMap<String, Integer> peersTimeout;
 
-	public SuperNode() throws RemoteException {
+	protected HashMap<String, HashMap<Integer, String>> peersResponses;
+
+	protected SuperNodeInterface server = null;
+
+	protected Boolean hasToken = false;
+
+	public SuperNode(String nextServerIp) throws RemoteException {
 		peersResources = new HashMap<>();
 		peersTimeout = new HashMap<>();
+		peersResponses = new HashMap<>();
+		try {
+            this.server = (SuperNodeInterface) Naming.lookup("rmi://" + nextServerIp + ":9000/SuperNode")
+        } catch (Exception e) {
+            System.out.println("connection failed with server");
+        }
 		new Thread(() -> {
 			while (true) {
 				KeepAliveController();
@@ -23,6 +36,9 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 					Thread.sleep(10000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
+				}
+				if (hasToken) {
+					//passa token
 				}
 			}
 		}).start();
@@ -45,18 +61,31 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	public HashMap<String, String> findResourceInRing(String resourceName) {
-		// Mágica aqui
+			//Dispara
+			HashMap<String, String> response = new HashMap<>();
+			while(response.size() == 0) {
+				response = searchInResponse(String resourceName)
+				continue
+			}
+			return response
 	}
 
-	public HashMap<String, String> findResource(String resourceName){
+	public void sendResourceForNextNode(String resourceName, String addr, HashMap<String, String> response) throws RemoteException {
+		if addr =! myAddr {
+			response = findResourceInThisNode(resourceName, response)
+			this.server.sendResourceForNextNode(resourceName, addr, response);
+		} else {
+			// adicionar na response
+		}
+	}
+
+	public HashMap<String, String> findResource(String resourceName) throws RemoteException{
 		HashMap<String, String> resourcePeers = new HashMap<>();
 		//TODO: Buscar no anel
-		// resourcePeers = findResourceInRing(resourceName, resourcePeers)
-
-
-		// Adicionar tudo do request no token no resourcePeers
-
-
+			while(hasToken != true) {
+				continue
+			}
+			resourcePeers = findResourceInRing(resourceName)
 		return findResourceInThisNode(resourceName,resourcePeers)
 	}
 
@@ -94,6 +123,26 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 			e.printStackTrace();
 		}
 		return user_id;
+	}
+
+	public HashMap<String, String> searchInResponse(String resourceName) {
+		HashMap<String, String> response = new HashMap<>();
+		peersResponses.forEach((addr, resources) -> {
+			resources.forEach((hash, name) -> {
+				if (name.contains(resourceName)) {
+					if (response.containsKey(addr)) {
+						// Mais de um file
+						response.put(addr, resourcePeers.get(addr) + ", (" + name + ", " + hash + ")");
+						peersResponses.remove(addr)
+					} else {
+						// Novo
+						response.put(addr, "(" + name + ", " + hash + ")");
+						peersResponses.remove(addr)
+					}
+				} 
+			});
+		});
+		return response;
 	}
 
 	public void KeepAliveController() {

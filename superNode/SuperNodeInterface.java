@@ -16,4 +16,8 @@ public interface SuperNodeInterface extends Remote {
     public void KeepAliveController() throws RemoteException;
 
     public void disconnect(String id) throws RemoteException;
+
+    public void sendResourceForNextNode(String resourceName, String addr, HashMap<String, String> response) throws RemoteException;
+
+    public void sendToken() throws RemoteException;
 }
