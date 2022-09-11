@@ -1,4 +1,4 @@
-package Node;
+package client;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;

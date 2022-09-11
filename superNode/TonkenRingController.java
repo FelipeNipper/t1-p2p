@@ -1,4 +1,3 @@
-package SuperNode;
 public class TonkenRingController {
     
 public enum ErrorControlType {

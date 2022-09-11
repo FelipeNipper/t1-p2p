@@ -26,41 +26,42 @@ public class NodeMain {
 				return;
 			} else {
 				Scanner in = new Scanner(System.in);
-	
+
 				System.out.println("digite uma porta para disponibilizar para outros peers");
 				int port = in.nextInt();
 				// validar se a porta esta disponivel e pedir outra para o usuario
-	
+
 				System.out.println("digite o path para um diretorio de arquivos");
 				String dirPath = in.next();
-	
+
 				HashMap<Integer, String> resources = readPath(dirPath);
 				try {
-					new Client(args[0], port, resources, dirPath).start();
-				} catch (IOException e) {}
+					new Node(args[0], port, resources, dirPath).start();
+				} catch (IOException e) {
+				}
 			}
 		}
-		
+
 	}
 
-    public static HashMap<Integer, String> readPath(String path){
-        HashMap<Integer, String> resources = new HashMap<>();
-        File folder = new File(path);
-        File[] listOfFiles = folder.listFiles();
+	public static HashMap<Integer, String> readPath(String path) {
+		HashMap<Integer, String> resources = new HashMap<>();
+		File folder = new File(path);
+		File[] listOfFiles = folder.listFiles();
 
-        for (int i = 0; i < listOfFiles.length; i++) {
-            if (listOfFiles[i].isFile()) {
-                resources.put(calculateHash(listOfFiles[i].getName()),listOfFiles[i].getName());
-                System.out.println("File " + listOfFiles[i].getName());
-            } else if (listOfFiles[i].isDirectory()) {
-                    System.out.println("Directory " + listOfFiles[i].getName());
-                }
-        }
+		for (int i = 0; i < listOfFiles.length; i++) {
+			if (listOfFiles[i].isFile()) {
+				resources.put(calculateHash(listOfFiles[i].getName()), listOfFiles[i].getName());
+				System.out.println("File " + listOfFiles[i].getName());
+			} else if (listOfFiles[i].isDirectory()) {
+				System.out.println("Directory " + listOfFiles[i].getName());
+			}
+		}
 
-        return resources;
-    }
+		return resources;
+	}
 
-    public static int calculateHash(String name){
-        return name.hashCode();
-    }
+	public static int calculateHash(String name) {
+		return name.hashCode();
+	}
 }

@@ -1,4 +1,4 @@
-package server;
+package SuperNode;
 
 import java.rmi.RemoteException;
 import java.rmi.server.RemoteServer;
@@ -87,7 +87,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		String ip = "";
 		String user_id = "";
 		try {
-			ip = RemoteSuperNode.getClientHost();
+			ip = RemoteSuperNode.getNodeHost();
 			user_id = ip + ":" + port;
 			peersResources.put(user_id, resources);
 		} catch (SuperNodeNotActiveException e) {

@@ -1,88 +1,122 @@
-package superNode;
+package server;
 
-import rmi.Peer;
-import rmi.Resource;
-
-import java.io.IOException;
-import java.rmi.Naming;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.rmi.server.RemoteServer;
+import java.rmi.server.ServerNotActiveException;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.HashMap;
 
-public class SuperNode extends Thread {
+public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface {
 
-	protected String host;
-	protected int port;
+	// mapa de ip+port que devolve um mapa de recursos (hash, nome)
+	protected HashMap<String, HashMap<Integer, String>> peersResources;
+	// mapa de ip+port que devolve quanto tempo o peer esta sem mandar KeepAlive
+	protected HashMap<String, Integer> peersTimeout;
 
-	private List<Peer> peers;
-
-	public SuperNode(String[] args) throws IOException {
-		host = args[0];
-		port = Integer.parseInt(args[1]);
-		this.peers = new ArrayList<>();
-	}
-
-	public void run() {
-		// Inicializando Servidor RMI
-		try {
-			System.setProperty("java.rmi.server.hostname", host);
-			LocateRegistry.createRegistry(port);
-			System.out.println("RMI registry ready.");
-		} catch (RemoteException e) {
-			System.out.println("RMI registry already running.");
-		}
-
-		// Registrando Rotas
-		try {
-			String server = "rmi://" + host + ":" + port + "/Resource";
-			Naming.rebind(server, new Resource(peers));
-			System.out.println("p2p SuperNode is ready.");
-		} catch (Exception e) {
-			System.out.println("p2p SuperNode failed: " + e);
-		}
-
-		long lastRun = System.nanoTime();
-
-		// Looping de controle de recursos
-		while (true) {
-			if (this.cycleCheck(lastRun)) {
-				// System.out.println("passou 10 segundos!");
-				System.out.println("Peers: " + this.listAllPeers());
-				lastRun = System.nanoTime();
-				killDeadPeers();
-			}
-
-		}
-	}
-
-	private boolean cycleCheck(long lastRun) {
-		long now = System.nanoTime();
-		long elapsedTime = now - lastRun;
-		long convertedTime = TimeUnit.SECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
-
-		return convertedTime > 10;
-	}
-
-	private void killDeadPeers() {
-		if (this.peers != null && !this.peers.isEmpty()) {
-			List<Peer> peersToRemove = new ArrayList<>();
-			for (Peer p : this.peers) {
-				if (p.isPeerDead()) {
-					peersToRemove.add(p);
-					System.out.println("Peer killed '" + p.toString());
+	public SuperNode() throws RemoteException {
+		peersResources = new HashMap<>();
+		peersTimeout = new HashMap<>();
+		new Thread(() -> {
+			while (true) {
+				KeepAliveController();
+				try {
+					Thread.sleep(10000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
 			}
-			this.peers.removeAll(peersToRemove);
+		}).start();
+	}
+
+	public String commandHandler(String command) throws RemoteException {
+		// find 'nome do arquivo'
+		String[] vars = command.split(" ");
+		String name = "";
+		for (int i = 1; i < vars.length; i++) {
+			name += vars[i];
+		}
+		switch (vars[0]) {
+			case "find":
+				HashMap<String, String> founded = findResource(name);
+				return founded.toString();
+			default:
+				return "invalid command";
 		}
 	}
 
-	private String listAllPeers() {
-		String response = "";
-		for (Peer p : this.peers) {
-			response += p.toString() + "; ";
+	public HashMap<String, String> findResourceInRing(String resourceName) {
+		// Mágica aqui
+	}
+
+	public HashMap<String, String> findResource(String resourceName){
+		HashMap<String, String> resourcePeers = new HashMap<>();
+		//TODO: Buscar no anel
+		// resourcePeers = findResourceInRing(resourceName, resourcePeers)
+
+
+		// Adicionar tudo do request no token no resourcePeers
+
+
+		return findResourceInThisNode(resourceName,resourcePeers)
+	}
+
+	public HashMap<String, String> findResourceInThisNode(String resourceName, HashMap<String, String> resourcePeers) {
+
+		peersResources.forEach((addr, resources) -> {
+			resources.forEach((hash, name) -> {
+				if (name.contains(resourceName)) {
+					if (resourcePeers.containsKey(addr)) {
+						// Mais de um file
+						resourcePeers.put(addr, resourcePeers.get(addr) + ", (" + name + ", " + hash + ")");
+					} else {
+						// Novo
+						resourcePeers.put(addr, "(" + name + ", " + hash + ")");
+					}
+				}
+			});
+		});
+		return resourcePeers;
+	}
+
+	// Outra thread
+	// Escuta o token ring e :
+	// - Receber um request de file -> findResource
+	// -
+
+	public String register(int port, HashMap<Integer, String> resources) throws RemoteException {
+		String ip = "";
+		String user_id = "";
+		try {
+			ip = RemoteSuperNode.getNodeHost();
+			user_id = ip + ":" + port;
+			peersResources.put(user_id, resources);
+		} catch (SuperNodeNotActiveException e) {
+			e.printStackTrace();
 		}
-		return response;
+		return user_id;
+	}
+
+	public void KeepAliveController() {
+		HashMap<String, Integer> peersTimeoutAux = new HashMap<>();
+
+		peersTimeout.forEach((key, value) -> {
+			value--;
+			if (value == 0) {
+				System.out.println(key + ".......... disconnected");
+				disconnect(key);
+			} else {
+				peersTimeoutAux.put(key, value);
+			}
+		});
+		peersTimeout = peersTimeoutAux;
+	}
+
+	public void disconnect(String id) {
+		peersResources.remove(id);
+	}
+
+	public void KeepAlive(String id) throws RemoteException {
+		peersTimeout.put(id, 3);
+		System.out.println(id + ":.......... still here");
 	}
 }
