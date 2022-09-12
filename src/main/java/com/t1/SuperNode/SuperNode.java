@@ -13,8 +13,8 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	protected HashMap<String, HashMap<Integer, String>> peersResources;
 	// mapa de ip+port que devolve quanto tempo o peer esta sem mandar KeepAlive
 	protected HashMap<String, Integer> peersTimeout;
-
-	protected HashMap<String, String> peersResponses;
+	// name <ip, hash>
+	protected HashMap<String, HashMap<String, String>> peersResponses;
 
 	protected SuperNodeInterface server = null;
 
@@ -22,14 +22,17 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 
 	protected String myAddr = null;
 
-	public SuperNode(String myAddr, String nextServerIp, Boolean hasToken) throws RemoteException {
+	protected String nextAddr = null;
+
+	public SuperNode(String myAddr, String nextAddr, Boolean hasToken) throws RemoteException {
 		peersResources = new HashMap<>();
 		peersTimeout = new HashMap<>();
 		peersResponses = new HashMap<>();
-		myAddr = myAddr;
-		hasToken = hasToken;
+		this.myAddr = myAddr;
+		this.hasToken = hasToken;
+		this.nextAddr = nextAddr;
 		try {
-			this.server = (SuperNodeInterface) Naming.lookup("rmi://" + nextServerIp + ":9000/SuperNode");
+			this.server = (SuperNodeInterface) Naming.lookup("rmi://" + nextAddr + ":9000/SuperNode");
 		} catch (Exception e) {
 			System.out.println("connection failed with server");
 		}
@@ -65,32 +68,34 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	public HashMap<String, String> findResourceInRing(String resourceName) {
-		// Dispara
 		HashMap<String, String> response = new HashMap<>();
+		try {
+			this.server.sendResourceForNextNode(resourceName, myAddr, response);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return response;
+		}
 		while (response.size() == 0) {
 			response = searchInResponse(resourceName);
 			continue;
 		}
+		response.remove("0.0.0.0");
 		return response;
 	}
 
 	public void sendResourceForNextNode(String resourceName, String addr, HashMap<String, String> response)
 			throws RemoteException {
-		if (addr = !myAddr) {
+		if (!addr.equalsIgnoreCase(myAddr)) {
 			response = findResourceInThisNode(resourceName, response);
+			response.put("0.0.0.0", myAddr);
 			this.server.sendResourceForNextNode(resourceName, addr, response);
 		} else {
 			// TODO: adicionar na response
-			response.forEach((respAddr, content) -> {
-				if (name.contains(resourceName)) {
-					if (peersResources.containsKey(addr)) {
-						// Mais de um file
-						peersResources.put(respAddr, peersResources.get(respAddr) + content);
-					} else {
-						// Novo
-						peersResources.put(respAddr, content);
-					}
-				}
+			peersResponses.put(resourceName, response);
+			if (this.hasToken) {
+				this.hasToken = false;
+				this.server.sendToken();
 			}
 
 		}
@@ -106,6 +111,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		return findResourceInThisNode(resourceName, resourcePeers);
 	}
 
+	// devolve um <ip, hash>
 	public HashMap<String, String> findResourceInThisNode(String resourceName, HashMap<String, String> resourcePeers) {
 
 		peersResources.forEach((addr, resources) -> {
@@ -113,10 +119,10 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 				if (name.contains(resourceName)) {
 					if (resourcePeers.containsKey(addr)) {
 						// Mais de um file
-						resourcePeers.put(addr, resourcePeers.get(addr) + ", (" + name + ", " + hash + ")");
+						resourcePeers.put(addr, resourcePeers.get(addr) + "," + hash);
 					} else {
 						// Novo
-						resourcePeers.put(addr, "(" + name + ", " + hash + ")");
+						resourcePeers.put(addr, "" + hash);
 					}
 				}
 			});
@@ -142,23 +148,23 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		return user_id;
 	}
 
+	// devolve um <ip, hash>
 	public HashMap<String, String> searchInResponse(String resourceName) {
 		HashMap<String, String> response = new HashMap<>();
-		peersResponses.forEach((addr, resources) -> {
-			resources.forEach((hash, name) -> {
-				if (name.contains(resourceName)) {
+		peersResponses.forEach((name, resources) -> {
+			if (name.contains(resourceName)) {
+				resources.forEach((addr, hash) -> {
 					if (response.containsKey(addr)) {
 						// Mais de um file
-						response.put(addr, response.get(addr) + ", (" + name + ", " + hash +
-								")");
-						peersResponses.remove(addr);
+						response.put(addr, response.get(addr) + "," + hash);
 					} else {
 						// Novo
-						response.put(addr, "(" + name + ", " + hash + ")");
-						peersResponses.remove(addr);
+						response.put(addr, "" + hash);
 					}
-				}
-			});
+				});
+				peersResponses.remove(name);
+			}
+
 		});
 		return response;
 	}
@@ -188,7 +194,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	public void sendToken() throws RemoteException {
-		// TODO Auto-generated method stub
+		this.hasToken = true;
 
 	}
 }

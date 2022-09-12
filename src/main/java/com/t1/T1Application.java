@@ -15,6 +15,17 @@ public class T1Application {
 	public static void main(String[] args) throws IOException {
 		// SuperNode
 		String[] argsTemp = { "0", "asuhd" };
+		/*
+		 * {
+		 * "sp1": {"addr": "10.32.163.100", "port": 4941, "next": "sp2", "token": true},
+		 * "sp2": {"addr": "10.32.163.122", "port": 4941, "next": "sp3", "token":
+		 * false},
+		 * "sp3": {"addr": "10.32.163.119", "port": 16669, "next": "sp4", "token":
+		 * false},
+		 * "sp4": {"addr": "10.32.163.157", "port": 10821, "next": "sp1", "token":
+		 * false}
+		 * }
+		 */
 		if (argsTemp[0] == "0") {
 			try {
 				System.setProperty("java.rmi.server.hostname", argsTemp[1]);
@@ -24,7 +35,7 @@ public class T1Application {
 			}
 			try {
 				String server = "rmi://" + argsTemp[1] + ":9000/SuperNode";
-				Naming.rebind(server, new SuperNode("ip do proximo aqui"));
+				Naming.rebind(server, new SuperNode(myAddr, nextAddr, hasToken));
 				System.out.println("p2p SuperNode is ready.");
 			} catch (Exception e) {
 				System.out.println("p2p SuperNode failed: " + e);
