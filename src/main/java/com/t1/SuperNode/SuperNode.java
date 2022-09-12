@@ -14,16 +14,20 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	// mapa de ip+port que devolve quanto tempo o peer esta sem mandar KeepAlive
 	protected HashMap<String, Integer> peersTimeout;
 
-	protected HashMap<String, HashMap<Integer, String>> peersResponses;
+	protected HashMap<String, String> peersResponses;
 
 	protected SuperNodeInterface server = null;
 
 	protected Boolean hasToken = false;
 
-	public SuperNode(String nextServerIp) throws RemoteException {
+	protected String myAddr = null;
+
+	public SuperNode(String myAddr, String nextServerIp, Boolean hasToken) throws RemoteException {
 		peersResources = new HashMap<>();
 		peersTimeout = new HashMap<>();
 		peersResponses = new HashMap<>();
+		myAddr = myAddr;
+		hasToken = hasToken;
 		try {
 			this.server = (SuperNodeInterface) Naming.lookup("rmi://" + nextServerIp + ":9000/SuperNode");
 		} catch (Exception e) {
@@ -72,12 +76,24 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 
 	public void sendResourceForNextNode(String resourceName, String addr, HashMap<String, String> response)
 			throws RemoteException {
-		// if (addr =! myAddr) {
-		// response = findResourceInThisNode(resourceName, response);
-		// this.server.sendResourceForNextNode(resourceName, addr, response);
-		// } else {
-		// TODO: adicionar na response
-		// }
+		if (addr = !myAddr) {
+			response = findResourceInThisNode(resourceName, response);
+			this.server.sendResourceForNextNode(resourceName, addr, response);
+		} else {
+			// TODO: adicionar na response
+			response.forEach((respAddr, content) -> {
+				if (name.contains(resourceName)) {
+					if (peersResources.containsKey(addr)) {
+						// Mais de um file
+						peersResources.put(respAddr, peersResources.get(respAddr) + content);
+					} else {
+						// Novo
+						peersResources.put(respAddr, content);
+					}
+				}
+			}
+
+		}
 	}
 
 	public HashMap<String, String> findResource(String resourceName) throws RemoteException {
@@ -128,22 +144,22 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 
 	public HashMap<String, String> searchInResponse(String resourceName) {
 		HashMap<String, String> response = new HashMap<>();
-		// peersResponses.forEach((addr, resources) -> {
-		// resources.forEach((hash, name) -> {
-		// if (name.contains(resourceName)) {
-		// if (response.containsKey(addr)) {
-		// // Mais de um file
-		// response.put(addr, resourcePeers.get(addr) + ", (" + name + ", " + hash +
-		// ")");
-		// peersResponses.remove(addr);
-		// } else {
-		// // Novo
-		// response.put(addr, "(" + name + ", " + hash + ")");
-		// peersResponses.remove(addr);
-		// }
-		// }
-		// });
-		// });
+		peersResponses.forEach((addr, resources) -> {
+			resources.forEach((hash, name) -> {
+				if (name.contains(resourceName)) {
+					if (response.containsKey(addr)) {
+						// Mais de um file
+						response.put(addr, response.get(addr) + ", (" + name + ", " + hash +
+								")");
+						peersResponses.remove(addr);
+					} else {
+						// Novo
+						response.put(addr, "(" + name + ", " + hash + ")");
+						peersResponses.remove(addr);
+					}
+				}
+			});
+		});
 		return response;
 	}
 
