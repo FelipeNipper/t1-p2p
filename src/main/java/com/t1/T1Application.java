@@ -1,27 +1,38 @@
-package server;
+package com.t1;
 
+import java.io.File;
 import java.io.IOException;
 import java.rmi.Naming;
 import java.rmi.registry.LocateRegistry;
+import java.util.HashMap;
+import java.util.Scanner;
 
-public class NodeMain {
+import com.t1.Node.Node;
+import com.t1.SuperNode.SuperNode;
+
+public class T1Application {
+
 	public static void main(String[] args) throws IOException {
-		if (args[0] == 0) {
+		// SuperNode
+		String[] argsTemp = { "0", "asuhd" };
+		if (argsTemp[0] == "0") {
 			try {
-				System.setProperty("java.rmi.server.hostname", args[1]);
+				System.setProperty("java.rmi.server.hostname", argsTemp[1]);
 				LocateRegistry.createRegistry(9000);
 				System.out.println("RMI registry ready.");
 			} catch (Exception e) {
 			}
 			try {
-				String server = "rmi://" + args[1] + ":9000/SuperNode";
-				Naming.rebind(server, new SuperNode());
+				String server = "rmi://" + argsTemp[1] + ":9000/SuperNode";
+				Naming.rebind(server, new SuperNode("ip do proximo aqui"));
 				System.out.println("p2p SuperNode is ready.");
 			} catch (Exception e) {
 				System.out.println("p2p SuperNode failed: " + e);
 			}
-		} else {
-			if (args.length < 1) {
+		}
+		// Node
+		else {
+			if (argsTemp.length < 1) {
 				System.out.println("Uso: java clientApp <server> \"<message>\" ");
 				return;
 			} else {
@@ -36,7 +47,7 @@ public class NodeMain {
 
 				HashMap<Integer, String> resources = readPath(dirPath);
 				try {
-					new Node(args[0], port, resources, dirPath).start();
+					new Node(argsTemp[0], port, resources, dirPath).start();
 				} catch (IOException e) {
 				}
 			}
