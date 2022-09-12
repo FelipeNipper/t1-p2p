@@ -24,7 +24,7 @@ public class T1Application {
 			}
 			try {
 				String server = "rmi://" + argsTemp[1] + ":9000/SuperNode";
-				Naming.rebind(server, new SuperNode(server));
+				Naming.rebind(server, new SuperNode("ip do proximo aqui"));
 				System.out.println("p2p SuperNode is ready.");
 			} catch (Exception e) {
 				System.out.println("p2p SuperNode failed: " + e);
