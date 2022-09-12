@@ -25,10 +25,10 @@ public class Node extends Thread {
     protected SuperNodeInterface server = null;
     protected SocketListener socketListener;
 
-    public Node(String serverIp, int port, HashMap<Integer, String> resources, String dir) throws IOException {
+    public Node(String superNodeIp, int port, HashMap<Integer, String> resources, String dir) throws IOException {
         // vamos verificar se o servidor está funcionando para nos registrarmos
         try {
-            this.server = (SuperNodeInterface) Naming.lookup("rmi://" + serverIp + ":9000/SuperNode");
+            this.server = (SuperNodeInterface) Naming.lookup("rmi://" + superNodeIp + ":9000/SuperNode");
             this.dirPath = dir;
             String user_id = this.server.register(port, resources);
             new KeepAlive(server, user_id).start();
@@ -40,6 +40,9 @@ public class Node extends Thread {
         this.downloadNumber = 0;
     }
 
+    // Só deve realizar o comando find primeiro para saber qual o
+    // ip, porta e hash - nome do arquivo em hash
+    // para depois usar o comando download
     public void run() {
         String command = "";
         in = new Scanner(System.in);
@@ -47,7 +50,7 @@ public class Node extends Thread {
         // se o client mandar exit para o server, ele ira desconectar
         while (!response.equalsIgnoreCase("exit")) {
             System.out.println(
-                    "Comandos para o servidor:\nfind <resource name>\ndownload <peerIp> <peerPort> <archive hash>");
+                    "Comandos para o servidor:\nfind <resource name>\ndownload <peerIp>:<peerPort> <archive hash>");
             command = in.nextLine();
             if (command.contains("download")) {
                 // lançar thread para download

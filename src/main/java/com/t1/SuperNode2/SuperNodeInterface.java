@@ -1,4 +1,4 @@
-package com.t1.SuperNode;
+package com.t1.SuperNode2;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

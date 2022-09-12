@@ -1,4 +1,4 @@
-package com.t1.SuperNode;
+package com.t1.SuperNode2;
 
 import java.rmi.RemoteException;
 import java.rmi.server.RemoteServer;
@@ -10,7 +10,7 @@ import java.rmi.Naming;
 public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface {
 
 	// mapa de ip+port que devolve um mapa de recursos (hash, nome)
-	protected HashMap<String, HashMap<Integer, String>> peersResources;
+	protected HashMap<String, HashMap<Integer, String>> myNodes;
 	// mapa de ip+port que devolve quanto tempo o peer esta sem mandar KeepAlive
 	protected HashMap<String, Integer> peersTimeout;
 	// name <ip, hash>
@@ -25,7 +25,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	protected String nextAddr = null;
 
 	public SuperNode(String myAddr, String nextAddr, Boolean hasToken) throws RemoteException {
-		peersResources = new HashMap<>();
+		myNodes = new HashMap<>();
 		peersTimeout = new HashMap<>();
 		peersResponses = new HashMap<>();
 		this.myAddr = myAddr;
@@ -59,7 +59,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 			user_id = ip + ":" + port;
 			// o SuperNode guarda a porta do node junto com o
 			// HashMap <hash do nome do arquivo, nome do arquivo>
-			peersResources.put(user_id, resources);
+			myNodes.put(user_id, resources);
 		} catch (ServerNotActiveException e) {
 			e.printStackTrace();
 		}
@@ -86,6 +86,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	public HashMap<String, String> findResource(String resourceName) throws RemoteException {
+		// ip + hash que tem o mesmo nome de arquivo
 		HashMap<String, String> resourcePeers = new HashMap<>();
 		// O SuperNode só procura quando ele tem o token?
 		// TODO: Buscar no anel
@@ -99,6 +100,8 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	public HashMap<String, String> findResourceInRing(String resourceName) {
 		HashMap<String, String> response = new HashMap<>();
 		try {
+			// buguei - como vai passar para o proximo
+			// magica do rmi?
 			this.server.sendResourceForNextNode(resourceName, myAddr, response);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
@@ -126,14 +129,13 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 				this.hasToken = false;
 				this.server.sendToken();
 			}
-
 		}
 	}
 
 	// devolve um <ip, hash>
 	public HashMap<String, String> findResourceInThisNode(String resourceName, HashMap<String, String> resourcePeers) {
 
-		peersResources.forEach((addr, resources) -> {
+		myNodes.forEach((addr, resources) -> {
 			resources.forEach((hash, name) -> {
 				if (name.contains(resourceName)) {
 					if (resourcePeers.containsKey(addr)) {
@@ -191,7 +193,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	public void disconnect(String id) {
-		peersResources.remove(id);
+		myNodes.remove(id);
 	}
 
 	public void KeepAlive(String id) throws RemoteException {

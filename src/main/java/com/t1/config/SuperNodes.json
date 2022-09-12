@@ -1,0 +1,26 @@
+{
+    "sp1": {
+        "addr": "10.32.163.100",
+        "port": 4941,
+        "next": "sp2",
+        "token": true
+    },
+    "sp2": {
+        "addr": "10.32.163.122",
+        "port": 4941,
+        "next": "sp3",
+        "token": false
+    },
+    "sp3": {
+        "addr": "10.32.163.119",
+        "port": 16669,
+        "next": "sp4",
+        "token": false
+    },
+    "sp4": {
+        "addr": "10.32.163.157",
+        "port": 10821,
+        "next": "sp1",
+        "token": false
+    }
+}
