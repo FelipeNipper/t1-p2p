@@ -1,4 +1,4 @@
-package Node;
+package com.t1.Node;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
@@ -13,9 +13,7 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Scanner;
 
-import javax.xml.crypto.Data;
-
-import SuperNode.ServerInterface;
+import com.t1.SuperNode.SuperNodeInterface;
 
 public class Node extends Thread {
     protected int port;

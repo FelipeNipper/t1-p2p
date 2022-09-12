@@ -1,9 +1,9 @@
-package client;
+package com.t1.Node;
 
 import java.io.*;
 import java.rmi.RemoteException;
 
-import SuperNode.SuperNodeInterface;
+import com.t1.SuperNode.SuperNodeInterface;
 
 public class KeepAlive extends Thread {
     private SuperNodeInterface server;

@@ -1,4 +1,4 @@
-package client;
+package com.t1.Node;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -8,7 +8,7 @@ import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SuperNodeSocket;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -72,7 +72,7 @@ public class SocketListener extends Thread {
     public boolean sendContent(InetAddress addr, int port, int fileHash) {
         try {
             // Initialize Sockets
-            SuperNodeSocket ssock = new SuperNodeSocket(this.port + 1);
+            ServerSocket ssock = new ServerSocket(this.port + 1);
             System.out.println("abri o server socket com a porta" + (this.port + 1) +
                     "\n aguardando a abertura de conexão pelo lado do client");
             Socket socket = ssock.accept();

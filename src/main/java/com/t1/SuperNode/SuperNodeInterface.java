@@ -1,4 +1,4 @@
-package server;
+package com.t1.SuperNode;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -17,7 +17,8 @@ public interface SuperNodeInterface extends Remote {
 
     public void disconnect(String id) throws RemoteException;
 
-    public void sendResourceForNextNode(String resourceName, String addr, HashMap<String, String> response) throws RemoteException;
+    public void sendResourceForNextNode(String resourceName, String addr, HashMap<String, String> response)
+            throws RemoteException;
 
     public void sendToken() throws RemoteException;
 }
