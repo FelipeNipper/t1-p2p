@@ -10,7 +10,7 @@ import java.rmi.Naming;
 public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface {
 
 	// mapa de ip+port que devolve um mapa de recursos (hash, nome)
-	protected HashMap<String, HashMap<Integer, String>> peersResources;
+	protected HashMap<String, HashMap<Integer, String>> myNodes;
 	// mapa de ip+port que devolve quanto tempo o peer esta sem mandar KeepAlive
 	protected HashMap<String, Integer> peersTimeout;
 	// name <ip, hash>
@@ -18,23 +18,26 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 
 	protected SuperNodeInterface server = null;
 
-	protected Boolean hasToken = false;
-
 	protected String myAddr = null;
 
-	protected String nextAddr = null;
+	protected int port = 0;
 
-	public SuperNode(String myAddr, String nextAddr, Boolean hasToken) throws RemoteException {
-		peersResources = new HashMap<>();
+	protected String nextAddrPort = null;
+
+	protected Boolean hasToken = false;
+
+	public SuperNode(String myAddr, int port, String nextAddrPort, Boolean hasToken) throws RemoteException {
+		myNodes = new HashMap<>();
 		peersTimeout = new HashMap<>();
 		peersResponses = new HashMap<>();
 		this.myAddr = myAddr;
+		this.port = port;
+		this.nextAddrPort = nextAddrPort;
 		this.hasToken = hasToken;
-		this.nextAddr = nextAddr;
 		try {
-			this.server = (SuperNodeInterface) Naming.lookup("rmi://" + nextAddr + ":9000/SuperNode");
+			server = (SuperNodeInterface) Naming.lookup("rmi://" + myAddr + ":" + nextAddrPort + "/SuperNode");
 		} catch (Exception e) {
-			System.out.println("connection failed with server");
+			System.out.println("Connection failed with server: " + e.getMessage());
 		}
 		new Thread(() -> {
 			while (true) {
@@ -51,15 +54,22 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		}).start();
 	}
 
+	/*
+	 * Registra o Node em um determinado SuperNode
+	 * Passando a porta que ele vai estar e um
+	 * HashMap<hash do nome do arquivo, nome do arquivo>
+	 */
 	public String register(int port, HashMap<Integer, String> resources) throws RemoteException {
+		System.out.println("Registrando o Node no SuperNode");
 		String ip = "";
 		String user_id = "";
 		try {
 			ip = RemoteServer.getClientHost();
 			user_id = ip + ":" + port;
+			System.out.println(user_id);
 			// o SuperNode guarda a porta do node junto com o
 			// HashMap <hash do nome do arquivo, nome do arquivo>
-			peersResources.put(user_id, resources);
+			myNodes.put(user_id, resources);
 		} catch (ServerNotActiveException e) {
 			e.printStackTrace();
 		}
@@ -86,6 +96,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	public HashMap<String, String> findResource(String resourceName) throws RemoteException {
+		// ip + hash que tem o mesmo nome de arquivo
 		HashMap<String, String> resourcePeers = new HashMap<>();
 		// O SuperNode só procura quando ele tem o token?
 		// TODO: Buscar no anel
@@ -99,6 +110,8 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	public HashMap<String, String> findResourceInRing(String resourceName) {
 		HashMap<String, String> response = new HashMap<>();
 		try {
+			// buguei - como vai passar para o proximo
+			// magica do rmi?
 			this.server.sendResourceForNextNode(resourceName, myAddr, response);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
@@ -126,14 +139,13 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 				this.hasToken = false;
 				this.server.sendToken();
 			}
-
 		}
 	}
 
 	// devolve um <ip, hash>
 	public HashMap<String, String> findResourceInThisNode(String resourceName, HashMap<String, String> resourcePeers) {
 
-		peersResources.forEach((addr, resources) -> {
+		myNodes.forEach((addr, resources) -> {
 			resources.forEach((hash, name) -> {
 				if (name.contains(resourceName)) {
 					if (resourcePeers.containsKey(addr)) {
@@ -191,7 +203,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	public void disconnect(String id) {
-		peersResources.remove(id);
+		myNodes.remove(id);
 	}
 
 	public void KeepAlive(String id) throws RemoteException {

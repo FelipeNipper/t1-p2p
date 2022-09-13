@@ -50,7 +50,7 @@ public class Node extends Thread {
         // se o client mandar exit para o server, ele ira desconectar
         while (!response.equalsIgnoreCase("exit")) {
             System.out.println(
-                    "Comandos para o servidor:\nfind <resource name>\ndownload <peerIp>:<peerPort> <archive hash>");
+                    "\nComandos para o servidor:\n\tfind <resource name>\n\tdownload <peerIp>:<peerPort> <archive hash>");
             command = in.nextLine();
             if (command.contains("download")) {
                 // lançar thread para download
