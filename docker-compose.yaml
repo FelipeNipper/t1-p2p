@@ -3,78 +3,35 @@
 services:
   super-nodo-1:
     container_name: super-nodo-1
-    image: t1
-    ports:
-      - "9000:9000"
+    build: .
+    networks:
+      distribuida:
+        ipv4_address: 10.1.1.1
     environment:
       - type=SuperNode
       - port=9000
-      # - ip=127.0.0.1
-      - ip=localhost
-      - nextIpPort=9000
+      - ip=10.1.1.1
+      - nextIp=10.1.1.2
       - hasToken=1
 
 
   super-nodo-2:
     container_name: super-nodo-2
-    image: t1
-    ports:
-      - "9001:9001"
+    build: .
+    networks:
+      distribuida:
+        ipv4_address: 10.1.1.2
     environment:
       - type=SuperNode
-      - port=9001
-      # - ip=127.0.0.1
-      - ip=localhost
-      - nextIpPort=9001
+      - port=9000
+      - ip=10.1.1.2
+      - nextIp=10.1.1.1
       - hasToken=0
 
-  # super-nodo-3:
-  #   container_name: super-nodo-3
-  #   image: t1
-  #   stdin_open: true
-  #   tty: true
-  #   # ports:
-  #   #   - "9000:9000"
-  #   networks:
-  #     distribuida-sn3:
-  #       ipv4_address: 200.0.0.130
-
-  # super-nodo-4:
-  #   container_name: super-nodo-4
-  #   image: t1
-  #   stdin_open: true
-  #   tty: true
-  #   # ports:
-  #   #   - "9000:9000"
-  #   networks:
-  #     distribuida-sn4:
-  #       ipv4_address: 200.0.0.194
-
 networks:
-  distribuida-sn1:
+  distribuida:
     driver: bridge
     ipam:
+      driver: default
       config:
-        - subnet: 200.0.0.0/26
-          gateway: 200.0.0.1
-
-  distribuida-sn2:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 200.0.0.64/26
-          gateway: 200.0.0.65
-
-  distribuida-sn3:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 200.0.0.128/26
-          gateway: 200.0.0.129
-
-  distribuida-sn4:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 200.0.0.192/26
-          gateway: 200.0.0.193
+        - subnet: 10.1.1.0/8

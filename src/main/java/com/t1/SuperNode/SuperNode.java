@@ -4,7 +4,6 @@ import java.rmi.RemoteException;
 import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
-import java.sql.Time;
 import java.util.HashMap;
 
 import com.t1.ConsoleColors;
@@ -20,28 +19,24 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	// name <ip, hash>
 	protected HashMap<String, HashMap<String, String>> peersResponses;
 
-	protected SuperNodeInterface server = null;
+	protected SuperNodeInterface nextSuperNode = null;
 
 	protected String myAddr = null;
 
 	protected int port = 0;
 
-	protected String nextAddrPort = null;
+	protected String nextAddr = null;
 
 	protected Boolean hasToken = false;
 
-	public SuperNode(String myAddr, int port, String nextAddrPort, Boolean hasToken) throws RemoteException {
+	public SuperNode(String myAddr, int port, String nextAddr, Boolean hasToken) throws RemoteException {
 		myNodes = new HashMap<>();
 		peersTimeout = new HashMap<>();
 		peersResponses = new HashMap<>();
 		this.myAddr = myAddr;
 		this.port = port;
-		this.nextAddrPort = nextAddrPort;
+		this.nextAddr = nextAddr;
 		this.hasToken = hasToken;
-		System.out.println("\nmyAddr-> " + myAddr);
-		System.out.println("port-> " + port);
-		System.out.println("nextAddrPort-> " + nextAddrPort);
-		System.out.println("hasToken-> " + hasToken);
 		new Thread(() -> {
 			while (true) {
 				KeepAliveController();
@@ -59,14 +54,12 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 
 	public void connectNext() throws RemoteException {
 		try {
-			String serverRoute = "rmi://" + myAddr + ":" + nextAddrPort + "/SuperNode";
+			String serverRoute = "rmi://" + nextAddr + ":" + port + "/SuperNode";
 			System.out.println("next server route -> " + serverRoute);
-			Thread.sleep(10000);
-			server = (SuperNodeInterface) Naming.lookup(serverRoute);
-			System.out.println("Naming lookup -> " + serverRoute);
+			nextSuperNode = (SuperNodeInterface) Naming.lookup(serverRoute);
 
-			System.out.println("\n" + ConsoleColors.GREEN_BOLD + "Portas do ip " + myAddr + " conectadas " + port
-					+ " -> " + nextAddrPort + ConsoleColors.RESET + "\n");
+			System.out.println("\n" + ConsoleColors.GREEN_BOLD + "Conectando " + myAddr + ":" + port + " -> " + nextAddr
+					+ ":" + port + ConsoleColors.RESET);
 			System.out.println();
 		} catch (Exception e) {
 			System.out.println("Connection failed with server: " + e.getMessage());
@@ -131,7 +124,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		try {
 			// buguei - como vai passar para o proximo
 			// magica do rmi?
-			this.server.sendResourceForNextNode(resourceName, myAddr, response);
+			this.nextSuperNode.sendResourceForNextNode(resourceName, myAddr, response);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -150,13 +143,13 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		if (!addr.equalsIgnoreCase(myAddr)) {
 			response = findResourceInThisNode(resourceName, response);
 			response.put("0.0.0.0", myAddr);
-			this.server.sendResourceForNextNode(resourceName, addr, response);
+			this.nextSuperNode.sendResourceForNextNode(resourceName, addr, response);
 		} else {
 			// TODO: adicionar na response
 			peersResponses.put(resourceName, response);
 			if (this.hasToken) {
 				this.hasToken = false;
-				this.server.sendToken();
+				this.nextSuperNode.sendToken();
 			}
 		}
 	}
