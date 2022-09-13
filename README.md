@@ -12,3 +12,6 @@ WIP: para pelo menos ver rodar
 mais para frente vai ter um docker compose que vai subir tudo junto
 
 FROM gradle:7.5-jdk17
+
+
+OS SUPER NODOS ESTAO SUBINDO DESSINCRONIZADOS

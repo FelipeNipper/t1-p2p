@@ -4,40 +4,29 @@ services:
   super-nodo-1:
     container_name: super-nodo-1
     image: t1
-    # stdin_open: true
-    # tty: true
     ports:
       - "9000:9000"
-    # networks:
-    #   distribuida-sn1:
-    #     ipv4_address: 200.0.0.2
     environment:
       - type=SuperNode
       - port=9000
       # - ip=127.0.0.1
-      # - ip=host.docker.internal
-      - ip=192.168.32.1
-      - nextIpPort=9001
+      - ip=localhost
+      - nextIpPort=9000
       - hasToken=1
-      - numSuperNode=1
 
 
-  # super-nodo-2:
-  #   container_name: super-nodo-2
-  #   image: t1
-  # #   stdin_open: true
-  # #   tty: true
-  #   ports:
-  #     - "9001:9001"
-  #   # networks:
-  #   #   distribuida-sn2:
-  #   #     ipv4_address: 200.0.0.66
-  #   environment:
-  #     - type=SuperNode
-  #     - port=9001
-  #     - ip=127.0.0.1
-  #     - nextIpPort=9000
-  #     - hasToken=0
+  super-nodo-2:
+    container_name: super-nodo-2
+    image: t1
+    ports:
+      - "9001:9001"
+    environment:
+      - type=SuperNode
+      - port=9001
+      # - ip=127.0.0.1
+      - ip=localhost
+      - nextIpPort=9001
+      - hasToken=0
 
   # super-nodo-3:
   #   container_name: super-nodo-3

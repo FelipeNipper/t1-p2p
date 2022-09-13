@@ -9,6 +9,7 @@ import java.util.Scanner;
 
 import com.t1.Node.Node;
 import com.t1.SuperNode.SuperNode;
+import com.t1.SuperNode.SuperNodeInterface;
 
 public class T1Application {
 
@@ -21,11 +22,10 @@ public class T1Application {
 	private static boolean hasToken;
 
 	public static void main(String[] args) throws IOException {
-		superNodePort = Integer.parseInt(System.getenv("port"));
 		// SuperNode
 		System.out.println("----->" + System.getenv("type"));
 		if (System.getenv("type").equalsIgnoreCase("SuperNode")) {
-			superNodePort = 9000;
+			superNodePort = Integer.parseInt(System.getenv("port"));
 			superNodeIp = System.getenv("ip");
 			nextSuperNodeIpPort = System.getenv("nextIpPort");
 			hasToken = System.getenv("hasToken").equalsIgnoreCase("1") ? true : false;
@@ -39,17 +39,23 @@ public class T1Application {
 	public static void SuperNodeCreate() {
 		System.out.println("\n" + ConsoleColors.GREEN_BOLD + "Criando SuperNode" + ConsoleColors.RESET + "\n");
 		try {
+			// Inicializando Servidor RMI
 			System.setProperty("java.rmi.server.hostname", superNodeIp);
 			LocateRegistry.createRegistry(superNodePort);
 			System.out.println("RMI registry ready.");
 		} catch (Exception e) {
 		}
 		try {
-			String server = "rmi://" + superNodeIp + ":" + superNodePort + "/SuperNode" + System.getenv("numSuperNode");
+			// Registrando Rotas
+			String server = "rmi://" + superNodeIp + ":" + superNodePort + "/SuperNode";// +
+																						// System.getenv("numSuperNode");
 			// System.out.println(
 			// "Connection failed with server: Connection refused to host: 127.0.0.1; nested
 			// exception is: java.net.ConnectException: Connection refused");
-			Naming.rebind(server, new SuperNode(superNodeIp, superNodePort, nextSuperNodeIpPort, hasToken));
+			SuperNodeInterface superNode = new SuperNode(superNodeIp, superNodePort, nextSuperNodeIpPort, hasToken);
+			Naming.rebind(server, superNode);
+			System.out.println("Naming rebind -> " + server);
+			superNode.connectNext();
 			System.out.println("p2p SuperNode is ready.");
 		} catch (Exception e) {
 			System.out.println(ConsoleColors.RED + "p2p SuperNode failed: " + e + ConsoleColors.RESET);

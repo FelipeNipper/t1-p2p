@@ -6,6 +6,8 @@ import java.util.HashMap;
 
 public interface SuperNodeInterface extends Remote {
 
+    public void connectNext() throws RemoteException;
+
     public String register(int port, HashMap<Integer, String> resources) throws RemoteException;
 
     public String commandHandler(String command) throws RemoteException;
