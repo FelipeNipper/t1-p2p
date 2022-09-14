@@ -36,7 +36,7 @@ public class SocketListener extends Thread {
 
     @Override
     public void run() {
-        System.out.println("*---------- aguardando conexao com outros peers ----------*");
+        System.out.println("*---------- aguardando conexao com outros nodos ----------*");
         while (true) {
             try {
                 // espera receber o packet
@@ -60,7 +60,7 @@ public class SocketListener extends Thread {
                 } else {
                     System.out.println("erro, arquivo com hash: " + fileHash + " nao encontrado");
                     System.out.println("encerrando conexao");
-                    // @toDo metodo para finalizar a conexao com o peer
+                    // @toDo metodo para finalizar a conexao com o nodo
                     System.out.println("*---------- conexao encerrada ----------*");
                 }
 

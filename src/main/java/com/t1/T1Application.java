@@ -16,10 +16,11 @@ public class T1Application {
 
 	private static String superNodeIp;
 
-	// private static String nextSuperNodeIpPort;
 	private static String nextSuperNodeIp;
 
 	private static int superNodePort;
+
+	private static String nodeIp;
 
 	private static int nodePort;
 
@@ -35,6 +36,7 @@ public class T1Application {
 
 			SuperNodeCreate();
 		} else {
+			nodeIp = System.getenv("ip");
 			nodePort = Integer.parseInt(System.getenv("port"));
 			superNodeIp = System.getenv("superNodeIp");
 			superNodePort = Integer.parseInt(System.getenv("superNodePort"));
@@ -71,18 +73,26 @@ public class T1Application {
 		Scanner in = new Scanner(System.in);
 
 		System.out.println(
-				"\nDigite o path para um diretorio de arquivos: \nEx - src/main/java/com/t1/<nome do diretório>"
+				"\nDigite o path para um diretorio de arquivos: \n"
 						+ ConsoleColors.YELLOW + " \n*Falta ajustar entrada do usuario" + ConsoleColors.RESET);
-		// String dirPath = in.next();
-		String dirPath = System.getenv("dir");
 
-		String allPath = "src/main/java/com/t1/" + dirPath;
-		FileTerminal.InputTempFile(allPath);
+		String dirPath = "src/main/java/com/t1/";
+
+		String dir = "";
+		if (System.getenv("dir").equalsIgnoreCase("Node2Dir")) {
+			dir = System.getenv("dir");
+		} else {
+			readPath(dirPath);
+			dir = in.next();
+		}
+
+		String allPath = dirPath + dir;
+		// FileTerminal.InputTempFile(allPath);
 		HashMap<Integer, String> resources = readPath(allPath);
 		try {
-			Thread.sleep(10000);
 			System.out.println("WAIT");
-			new Node(nodePort, superNodeIp, superNodePort, resources, dirPath).start();
+			Thread.sleep(5000);
+			new Node(nodeIp, nodePort, superNodeIp, superNodePort, resources, dir).start();
 		} catch (IOException e) {
 
 		}

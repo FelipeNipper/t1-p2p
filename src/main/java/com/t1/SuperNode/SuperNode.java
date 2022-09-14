@@ -14,10 +14,10 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 
 	// mapa de ip+port que devolve um mapa de recursos (hash, nome)
 	protected HashMap<String, HashMap<Integer, String>> myNodes;
-	// mapa de ip+port que devolve quanto tempo o peer esta sem mandar KeepAlive
-	protected HashMap<String, Integer> peersTimeout;
+	// mapa de ip+port que devolve quanto tempo o nodo esta sem mandar KeepAlive
+	protected HashMap<String, Integer> nodesTimeout;
 	// name <ip, hash>
-	protected HashMap<String, HashMap<String, String>> peersResponses;
+	protected HashMap<String, HashMap<String, String>> nodesResponses;
 
 	protected SuperNodeInterface nextSuperNode;
 
@@ -31,8 +31,8 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 
 	public SuperNode(String myAddr, int port, String nextAddr, Boolean hasToken) throws RemoteException {
 		myNodes = new HashMap<>();
-		peersTimeout = new HashMap<>();
-		peersResponses = new HashMap<>();
+		nodesTimeout = new HashMap<>();
+		nodesResponses = new HashMap<>();
 		this.myAddr = myAddr;
 		this.port = port;
 		this.nextAddr = nextAddr;
@@ -119,14 +119,14 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 
 	public HashMap<String, String> findResource(String resourceName) throws RemoteException {
 		// ip + hash que tem o mesmo nome de arquivo
-		HashMap<String, String> resourcePeers = new HashMap<>();
+		HashMap<String, String> resourceNodes = new HashMap<>();
 		// O SuperNode só procura quando ele tem o token?
 		// TODO: Buscar no anel
 		while (hasToken != true) {
 			continue;
 		}
-		resourcePeers = findResourceInRing(resourceName);
-		return findResourceInThisNode(resourceName, resourcePeers);
+		resourceNodes = findResourceInRing(resourceName);
+		return findResourceInThisNode(resourceName, resourceNodes);
 	}
 
 	public HashMap<String, String> findResourceInRing(String resourceName) {
@@ -156,7 +156,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 			this.nextSuperNode.sendResourceForNextNode(resourceName, addr, response);
 		} else {
 			// TODO: adicionar na response
-			peersResponses.put(resourceName, response);
+			nodesResponses.put(resourceName, response);
 			if (this.hasToken) {
 				this.hasToken = false;
 				this.nextSuperNode.sendToken();
@@ -165,22 +165,22 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	// devolve um <ip, hash>
-	public HashMap<String, String> findResourceInThisNode(String resourceName, HashMap<String, String> resourcePeers) {
+	public HashMap<String, String> findResourceInThisNode(String resourceName, HashMap<String, String> resourceNodes) {
 
 		myNodes.forEach((addr, resources) -> {
 			resources.forEach((hash, name) -> {
 				if (name.contains(resourceName)) {
-					if (resourcePeers.containsKey(addr)) {
+					if (resourceNodes.containsKey(addr)) {
 						// Mais de um file
-						resourcePeers.put(addr, resourcePeers.get(addr) + "," + hash);
+						resourceNodes.put(addr, resourceNodes.get(addr) + "," + hash);
 					} else {
 						// Novo
-						resourcePeers.put(addr, "" + hash);
+						resourceNodes.put(addr, "" + hash);
 					}
 				}
 			});
 		});
-		return resourcePeers;
+		return resourceNodes;
 	}
 
 	// Outra thread
@@ -191,7 +191,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	// devolve um <ip, hash>
 	public HashMap<String, String> searchInResponse(String resourceName) {
 		HashMap<String, String> response = new HashMap<>();
-		peersResponses.forEach((name, resources) -> {
+		nodesResponses.forEach((name, resources) -> {
 			if (name.contains(resourceName)) {
 				resources.forEach((addr, hash) -> {
 					if (response.containsKey(addr)) {
@@ -202,7 +202,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 						response.put(addr, "" + hash);
 					}
 				});
-				peersResponses.remove(name);
+				nodesResponses.remove(name);
 			}
 
 		});
@@ -210,18 +210,18 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	public void KeepAliveController() {
-		HashMap<String, Integer> peersTimeoutAux = new HashMap<>();
+		HashMap<String, Integer> nodesTimeoutAux = new HashMap<>();
 
-		peersTimeout.forEach((key, value) -> {
+		nodesTimeout.forEach((key, value) -> {
 			value--;
 			if (value == 0) {
 				System.out.println(key + ".......... disconnected");
 				disconnect(key);
 			} else {
-				peersTimeoutAux.put(key, value);
+				nodesTimeoutAux.put(key, value);
 			}
 		});
-		peersTimeout = peersTimeoutAux;
+		nodesTimeout = nodesTimeoutAux;
 	}
 
 	public void disconnect(String id) {
@@ -229,7 +229,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	public void KeepAlive(String id) throws RemoteException {
-		peersTimeout.put(id, 3);
+		nodesTimeout.put(id, 3);
 		System.out.println(id + ":.......... still here");
 	}
 

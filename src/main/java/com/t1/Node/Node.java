@@ -17,19 +17,22 @@ import com.t1.ConsoleColors;
 import com.t1.SuperNode.SuperNodeInterface;
 
 public class Node extends Thread {
+    protected String ip;
     protected int port;
+    protected String superNodeIp;
     protected int superNodePort;
     protected String user_id;
     protected String dirPath;
-    protected String superNodeIp;
     protected int downloadNumber;
     protected SuperNodeInterface server;
     protected SocketListener socketListener;
 
-    public Node(int port, String superNodeIp, int superNodePort, HashMap<Integer, String> resources, String dirPath)
+    public Node(String ip, int port, String superNodeIp, int superNodePort, HashMap<Integer, String> resources,
+            String dirPath)
             throws IOException {
         // vamos verificar se o servidor está funcionando para nos registrarmos
         try {
+            this.ip = ip;
             this.port = port;
             this.superNodeIp = superNodeIp;
             this.superNodePort = superNodePort;
@@ -38,8 +41,8 @@ public class Node extends Thread {
             String superNodeRoute = "rmi://" + superNodeIp + ":" + superNodePort + "/SuperNode";
             System.out.println("Super node route -> " + superNodeRoute);
             this.server = (SuperNodeInterface) Naming.lookup(superNodeRoute);
-            System.out.println("\n" + ConsoleColors.GREEN_BOLD + "Conectando " + superNodeIp + ":" + port + " -> :"
-                    + superNodePort + ConsoleColors.RESET + "\n");
+            System.out.println("\n" + ConsoleColors.GREEN_BOLD + "Conectando " + ip + ":" + port + " no super nodo "
+                    + superNodeIp + ":" + superNodePort + ConsoleColors.RESET + "\n");
             String user_id = this.server.register(port, resources);
             socketListener.start();
             new KeepAlive(server, user_id).start();
@@ -60,14 +63,14 @@ public class Node extends Thread {
         // se o client mandar exit para o server, ele ira desconectar
         while (!response.equalsIgnoreCase("exit")) {
             System.out.println(
-                    "\nComandos para o servidor:\n\tfind <resource name>\n\tdownload <peerIp>:<peerPort> <archive hash>"
+                    "\nComandos para o servidor:\n\tfind <resource name>\n\tdownload <nodeIp>:<nodePort> <archive hash>"
                             + ConsoleColors.YELLOW + "\n*Falta ajustar entrada do usuario" + ConsoleColors.RESET);
-            // command = in.nextLine();
-            if (dirPath.contains("Node1Dir")) {
-                command = "find teste";
-            } else {
-                command = "find abaco";
-            }
+            command = in.nextLine();
+            // if (dirPath.contains("Node1Dir")) {
+            // command = "find teste";
+            // } else {
+            // command = "find abaco";
+            // }
 
             if (command.contains("download")) {
                 // lançar thread para download
