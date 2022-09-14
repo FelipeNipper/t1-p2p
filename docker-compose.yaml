@@ -14,7 +14,6 @@ services:
       - nextIp=10.1.1.2
       - hasToken=1
 
-
   super-nodo-2:
     container_name: super-nodo-2
     build: .
@@ -27,6 +26,32 @@ services:
       - ip=10.1.1.2
       - nextIp=10.1.1.1
       - hasToken=0
+
+  nodo-1:
+    container_name: nodo-1
+    build: .
+    networks:
+      distribuida:
+        ipv4_address: 10.1.1.3
+    environment:
+      - type=Node
+      - port=9001
+      - superNodeIp=10.1.1.1
+      - superNodePort=9000
+      - dir=Node1Dir
+    
+  nodo-2:
+    container_name: nodo-2
+    build: .
+    networks:
+      distribuida:
+        ipv4_address: 10.1.1.4
+    environment:
+      - type=Node
+      - port=9001
+      - superNodeIp=10.1.1.2
+      - superNodePort=9000
+      - dir=Node2Dir
 
 networks:
   distribuida:

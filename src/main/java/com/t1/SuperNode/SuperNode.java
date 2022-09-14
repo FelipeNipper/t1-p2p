@@ -19,15 +19,15 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	// name <ip, hash>
 	protected HashMap<String, HashMap<String, String>> peersResponses;
 
-	protected SuperNodeInterface nextSuperNode = null;
+	protected SuperNodeInterface nextSuperNode;
 
-	protected String myAddr = null;
+	protected String myAddr;
 
-	protected int port = 0;
+	protected int port;
 
-	protected String nextAddr = null;
+	protected String nextAddr;
 
-	protected Boolean hasToken = false;
+	protected Boolean hasToken;
 
 	public SuperNode(String myAddr, int port, String nextAddr, Boolean hasToken) throws RemoteException {
 		myNodes = new HashMap<>();
@@ -53,16 +53,24 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	public void connectNext() throws RemoteException {
-		try {
-			String serverRoute = "rmi://" + nextAddr + ":" + port + "/SuperNode";
-			System.out.println("next server route -> " + serverRoute);
-			nextSuperNode = (SuperNodeInterface) Naming.lookup(serverRoute);
+		boolean connected = false;
+		while (!connected) {
+			try {
+				Thread.sleep(1000);
+				String nextSuperNodeRoute = "rmi://" + nextAddr + ":" + port + "/SuperNode";
+				System.out.println("Next super node route -> " + nextSuperNodeRoute);
+				nextSuperNode = (SuperNodeInterface) Naming.lookup(nextSuperNodeRoute);
 
-			System.out.println("\n" + ConsoleColors.GREEN_BOLD + "Conectando " + myAddr + ":" + port + " -> " + nextAddr
-					+ ":" + port + ConsoleColors.RESET);
-			System.out.println();
-		} catch (Exception e) {
-			System.out.println("Connection failed with server: " + e.getMessage());
+				System.out.println(
+						"\n" + ConsoleColors.GREEN_BOLD + "Conectando " + myAddr + ":" + port + " -> " + nextAddr
+								+ ":" + port + ConsoleColors.RESET);
+				connected = true;
+				System.out.println();
+			} catch (Exception e) {
+				System.out
+						.println(ConsoleColors.RED_BOLD + "Falha ao conectar " + myAddr + ":" + port + " -> " + nextAddr
+								+ ":" + port + ConsoleColors.RESET);
+			}
 		}
 	}
 
@@ -100,8 +108,10 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		}
 		switch (vars[0]) {
 			case "find":
+				System.out.println("\t" + ConsoleColors.BLUE + "PROCURANDO POR " + name + ConsoleColors.RESET);
 				HashMap<String, String> founded = findResource(name);
 				return founded.toString();
+			// return "\nMock\n";
 			default:
 				return "invalid command";
 		}

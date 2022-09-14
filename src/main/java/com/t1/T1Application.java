@@ -21,25 +21,30 @@ public class T1Application {
 
 	private static int superNodePort;
 
+	private static int nodePort;
+
 	private static boolean hasToken;
 
-	public static void main(String[] args) throws IOException, NotBoundException {
+	public static void main(String[] args) throws InterruptedException {
 		// SuperNode
 		if (System.getenv("type").equalsIgnoreCase("SuperNode")) {
-			superNodePort = Integer.parseInt(System.getenv("port"));
 			superNodeIp = System.getenv("ip");
+			superNodePort = Integer.parseInt(System.getenv("port"));
 			nextSuperNodeIp = System.getenv("nextIp");
 			hasToken = System.getenv("hasToken").equalsIgnoreCase("1") ? true : false;
 
 			SuperNodeCreate();
 		} else {
-			superNodeIp = args[0];
+			nodePort = Integer.parseInt(System.getenv("port"));
+			superNodeIp = System.getenv("superNodeIp");
+			superNodePort = Integer.parseInt(System.getenv("superNodePort"));
 			NodeCreate();
 		}
 	}
 
 	public static void SuperNodeCreate() {
-		System.out.println("\n" + ConsoleColors.GREEN_BOLD + "Criando SuperNode" + ConsoleColors.RESET + "\n");
+		System.out.println("\n" + ConsoleColors.GREEN_BOLD + " -----------> Criando SuperNode <----------"
+				+ ConsoleColors.RESET + "\n");
 		try {
 			// Inicializando Servidor RMI
 			System.setProperty("java.rmi.server.hostname", superNodeIp);
@@ -59,24 +64,25 @@ public class T1Application {
 		}
 	}
 
-	public static void NodeCreate() {
+	public static void NodeCreate() throws InterruptedException {
 		System.out
-				.println("\n" + ConsoleColors.GREEN_BOLD + "-----------> Criando node com os seus arquivos<----------\t"
+				.println("\n" + ConsoleColors.GREEN_BOLD + "-----------> Criando node com os seus arquivos <----------"
 						+ ConsoleColors.RESET + "\n");
 		Scanner in = new Scanner(System.in);
 
-		System.out.println("Digite uma porta para disponibilizar para outros peers: ");
-		int port = in.nextInt();
-		// validar se a porta esta disponivel e pedir outra para o usuario
-
 		System.out.println(
-				"\nDigite o path para um diretorio de arquivos: \nEx - src/main/java/com/t1/<nome do diretório>");
-		String dirPath = in.next();
+				"\nDigite o path para um diretorio de arquivos: \nEx - src/main/java/com/t1/<nome do diretório>"
+						+ ConsoleColors.YELLOW + " \n*Falta ajustar entrada do usuario" + ConsoleColors.RESET);
+		// String dirPath = in.next();
+		String dirPath = System.getenv("dir");
 
 		String allPath = "src/main/java/com/t1/" + dirPath;
+		FileTerminal.InputTempFile(allPath);
 		HashMap<Integer, String> resources = readPath(allPath);
 		try {
-			new Node(superNodeIp, port, resources, dirPath).start();
+			Thread.sleep(10000);
+			System.out.println("WAIT");
+			new Node(nodePort, superNodeIp, superNodePort, resources, dirPath).start();
 		} catch (IOException e) {
 
 		}

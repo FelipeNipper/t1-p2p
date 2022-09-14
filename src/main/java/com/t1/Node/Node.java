@@ -13,29 +13,38 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Scanner;
 
+import com.t1.ConsoleColors;
 import com.t1.SuperNode.SuperNodeInterface;
 
 public class Node extends Thread {
     protected int port;
-    protected Scanner in;
-    protected String response = "";
-    protected String user_id = "";
-    protected String dirPath = "";
+    protected int superNodePort;
+    protected String user_id;
+    protected String dirPath;
+    protected String superNodeIp;
     protected int downloadNumber;
-    protected SuperNodeInterface server = null;
+    protected SuperNodeInterface server;
     protected SocketListener socketListener;
 
-    public Node(String superNodeIp, int port, HashMap<Integer, String> resources, String dir) throws IOException {
+    public Node(int port, String superNodeIp, int superNodePort, HashMap<Integer, String> resources, String dirPath)
+            throws IOException {
         // vamos verificar se o servidor está funcionando para nos registrarmos
         try {
-            this.server = (SuperNodeInterface) Naming.lookup("rmi://" + superNodeIp + ":9000/SuperNode");
-            this.dirPath = dir;
+            this.port = port;
+            this.superNodeIp = superNodeIp;
+            this.superNodePort = superNodePort;
+            this.dirPath = dirPath;
+            this.socketListener = new SocketListener(port, dirPath, resources);
+            String superNodeRoute = "rmi://" + superNodeIp + ":" + superNodePort + "/SuperNode";
+            System.out.println("Super node route -> " + superNodeRoute);
+            this.server = (SuperNodeInterface) Naming.lookup(superNodeRoute);
+            System.out.println("\n" + ConsoleColors.GREEN_BOLD + "Conectando " + superNodeIp + ":" + port + " -> :"
+                    + superNodePort + ConsoleColors.RESET + "\n");
             String user_id = this.server.register(port, resources);
+            socketListener.start();
             new KeepAlive(server, user_id).start();
-            this.socketListener = new SocketListener(port, dir, resources);
-            this.socketListener.start();
         } catch (Exception e) {
-            System.out.println("connection failed with server");
+            System.out.println("Connection failed with server: " + e.getMessage());
         }
         this.downloadNumber = 0;
     }
@@ -44,14 +53,22 @@ public class Node extends Thread {
     // ip, porta e hash - nome do arquivo em hash
     // para depois usar o comando download
     public void run() {
-        String command = "";
-        in = new Scanner(System.in);
+        String command;
+        String response = "";
+        Scanner in = new Scanner(System.in);
         // aqui sera a comunicacao entre o client e server
         // se o client mandar exit para o server, ele ira desconectar
         while (!response.equalsIgnoreCase("exit")) {
             System.out.println(
-                    "\nComandos para o servidor:\n\tfind <resource name>\n\tdownload <peerIp>:<peerPort> <archive hash>");
-            command = in.nextLine();
+                    "\nComandos para o servidor:\n\tfind <resource name>\n\tdownload <peerIp>:<peerPort> <archive hash>"
+                            + ConsoleColors.YELLOW + "\n*Falta ajustar entrada do usuario" + ConsoleColors.RESET);
+            // command = in.nextLine();
+            if (dirPath.contains("Node1Dir")) {
+                command = "find teste";
+            } else {
+                command = "find abaco";
+            }
+
             if (command.contains("download")) {
                 // lançar thread para download
                 // logica de conexão direta com sockets
@@ -65,6 +82,7 @@ public class Node extends Thread {
                 } catch (RemoteException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
+
                 }
             }
             System.out.println(response + "\n\n\n");
