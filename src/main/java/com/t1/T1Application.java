@@ -27,7 +27,8 @@ public class T1Application {
 
 	private static boolean hasToken;
 
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException, IOException {
+
 		// SuperNode
 		if (System.getenv("type").equalsIgnoreCase("SuperNode")) {
 			superNodeIp = System.getenv("ip");
@@ -46,7 +47,8 @@ public class T1Application {
 	}
 
 	public static void SuperNodeCreate() {
-		System.out.println("\n" + ConsoleColors.GREEN_BOLD + " -----------> Criando SuperNode <----------"
+		System.out.println("\n" + ConsoleColors.GREEN_BOLD +
+				" -----------> Criando SuperNode <----------"
 				+ ConsoleColors.RESET + "\n");
 		try {
 			// Inicializando Servidor RMI
@@ -58,42 +60,34 @@ public class T1Application {
 		try {
 			// Registrando Rotas
 			String server = "rmi://" + superNodeIp + ":" + superNodePort + "/SuperNode";
-			SuperNodeInterface superNode = new SuperNode(superNodeIp, superNodePort, nextSuperNodeIp, hasToken);
+			SuperNodeInterface superNode = new SuperNode(superNodeIp, superNodePort,
+					nextSuperNodeIp, hasToken);
 			Naming.rebind(server, superNode);
 			superNode.connectNext();
 			System.out.println("P2P SuperNode is ready.");
 		} catch (Exception e) {
-			System.out.println(ConsoleColors.RED + "P2P SuperNode failed: " + e + ConsoleColors.RESET);
+			System.out.println(ConsoleColors.RED + "P2P SuperNode failed: " + e +
+					ConsoleColors.RESET);
 		}
 	}
 
 	public static void NodeCreate() throws InterruptedException {
 		System.out
-				.println("\n" + ConsoleColors.GREEN_BOLD + "-----------> Criando node com os seus arquivos <----------"
+				.println("\n" + ConsoleColors.GREEN_BOLD +
+						"-----------> Criando node com os seus arquivos <----------"
 						+ ConsoleColors.RESET + "\n");
-		Scanner in = new Scanner(System.in);
 
-		System.out.println(
-				"\nDigite o path para um diretorio de arquivos: \n"
-						+ ConsoleColors.YELLOW + " \n*Falta ajustar entrada do usuario" + ConsoleColors.RESET);
+		// String dir = System.getenv("dir");
+		String dirPath = "src/main/java/com/t1/Resources/" + System.getenv("dir");
+		String terminalPath = "src/main/java/com/t1/Terminal/" +
+				System.getenv("terminal") + ".txt";
 
-		String dirPath = "src/main/java/com/t1/";
-
-		String dir = "";
-		// if (System.getenv("dir").equalsIgnoreCase("Node2Dir")) {
-		dir = System.getenv("dir");
-		// } else {
-		// readPath(dirPath);
-		// dir = in.next();
-		// }
-
-		String allPath = dirPath + dir;
-		// FileTerminal.InputTempFile(allPath);
-		ConcurrentHashMap<Integer, String> resources = readPath(allPath);
+		ConcurrentHashMap<Integer, String> resources = readPath(dirPath);
 		try {
 			System.out.println("WAIT");
-			Thread.sleep(5000);
-			new Node(nodeIp, nodePort, superNodeIp, superNodePort, resources, dir).start();
+			Thread.sleep(2000);
+			new Node(nodeIp, nodePort, superNodeIp, superNodePort, resources, dirPath,
+					terminalPath).start();
 		} catch (IOException e) {
 
 		}
@@ -124,4 +118,18 @@ public class T1Application {
 	public static int calculateHash(String name) {
 		return name.hashCode();
 	}
+
 }
+
+/*
+ * String command = null;
+ * System.out.println(
+ * "Comandos para o SUPER NODO:  \n[ find <nome do arquivo> ]\n[ download <ip>:<port> <hash> ]\n[ all ]\n[ exit ]"
+ * );
+ * // command = in.nextLine();
+ * while (command == null || command.equalsIgnoreCase("")) {
+ * command = FileTerminal.InputFile("src/main/java/com/t1/Terminal/Node1.txt");
+ * }
+ * System.out.println("sad " + command);
+ * }
+ */

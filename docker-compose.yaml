@@ -46,6 +46,7 @@ services:
       - superNodeIp=10.1.1.1
       - superNodePort=9000
       - dir=Node1Dir
+      - terminal=Node1
     
   node-2:
     container_name: node-2
@@ -62,6 +63,7 @@ services:
       - superNodeIp=10.1.1.2
       - superNodePort=9000
       - dir=Node2Dir
+      - terminal=Node2
 
 networks:
   distribuida:

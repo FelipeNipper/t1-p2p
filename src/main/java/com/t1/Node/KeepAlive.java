@@ -6,18 +6,18 @@ import java.rmi.RemoteException;
 import com.t1.SuperNode.SuperNodeInterface;
 
 public class KeepAlive extends Thread {
-    private SuperNodeInterface server;
+    private SuperNodeInterface superNode;
     private String id;
 
-    public KeepAlive(SuperNodeInterface server, String id) throws IOException {
-        this.server = server;
+    public KeepAlive(SuperNodeInterface superNode, String id) throws IOException {
+        this.superNode = superNode;
         this.id = id;
     }
 
     public void run() {
         while (true) {
             try {
-                server.KeepAlive(id);
+                superNode.KeepAlive(id);
                 Thread.sleep(10000);
             } catch (RemoteException e1) {
                 System.out.println("Error on sending KeepAlive");

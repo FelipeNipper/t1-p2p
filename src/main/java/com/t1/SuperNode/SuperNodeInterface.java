@@ -9,9 +9,9 @@ public interface SuperNodeInterface extends Remote {
 
     public void connectNext() throws RemoteException;
 
-    public String register(int port, ConcurrentHashMap<Integer, String> resources) throws RemoteException;
+    public String register(String ip, int port, ConcurrentHashMap<Integer, String> resources) throws RemoteException;
 
-    public String commandHandler(String command) throws RemoteException;
+    public String findHandler(String fileName) throws RemoteException;
 
     public ConcurrentHashMap<String, String> findResource(String resourceName) throws RemoteException;
 
