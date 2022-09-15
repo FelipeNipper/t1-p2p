@@ -12,43 +12,68 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 
+import com.t1.ConsoleColors;
 import com.t1.SuperNode.SuperNodeInterface;
 
 public class Node extends Thread {
+    protected String ip;
     protected int port;
-    protected Scanner in;
-    protected String response = "";
-    protected String user_id = "";
-    protected String dirPath = "";
+    protected String superNodeIp;
+    protected int superNodePort;
+    protected String user_id;
+    protected String dirPath;
     protected int downloadNumber;
-    protected SuperNodeInterface server = null;
+    protected SuperNodeInterface server;
     protected SocketListener socketListener;
 
-    public Node(String serverIp, int port, HashMap<Integer, String> resources, String dir) throws IOException {
+    public Node(String ip, int port, String superNodeIp, int superNodePort,
+            ConcurrentHashMap<Integer, String> resources,
+            String dirPath)
+            throws IOException {
         // vamos verificar se o servidor está funcionando para nos registrarmos
         try {
-            this.server = (SuperNodeInterface) Naming.lookup("rmi://" + serverIp + ":9000/SuperNode");
-            this.dirPath = dir;
+            this.ip = ip;
+            this.port = port;
+            this.superNodeIp = superNodeIp;
+            this.superNodePort = superNodePort;
+            this.dirPath = dirPath;
+            this.socketListener = new SocketListener(port, dirPath, resources);
+            String superNodeRoute = "rmi://" + superNodeIp + ":" + superNodePort + "/SuperNode";
+            System.out.println("Super node route -> " + superNodeRoute);
+            this.server = (SuperNodeInterface) Naming.lookup(superNodeRoute);
+            System.out.println("\n" + ConsoleColors.GREEN_BOLD + "Conectando " + ip + ":" + port + " no super nodo "
+                    + superNodeIp + ":" + superNodePort + ConsoleColors.RESET + "\n");
             String user_id = this.server.register(port, resources);
+            socketListener.start();
             new KeepAlive(server, user_id).start();
-            this.socketListener = new SocketListener(port, dir, resources);
-            this.socketListener.start();
         } catch (Exception e) {
-            System.out.println("connection failed with server");
+            System.out.println("Connection failed with server: " + e.getMessage());
         }
         this.downloadNumber = 0;
     }
 
+    // Só deve realizar o comando find primeiro para saber qual o
+    // ip, porta e hash - nome do arquivo em hash
+    // para depois usar o comando download
     public void run() {
-        String command = "";
-        in = new Scanner(System.in);
+        String command;
+        String response = "";
+        Scanner in = new Scanner(System.in);
         // aqui sera a comunicacao entre o client e server
         // se o client mandar exit para o server, ele ira desconectar
         while (!response.equalsIgnoreCase("exit")) {
             System.out.println(
-                    "Comandos para o servidor:\nfind <resource name>\ndownload <peerIp> <peerPort> <archive hash>");
+                    "\nComandos para o servidor:\n\tfind <resource name>\n\tdownload <nodeIp>:<nodePort> <archive hash>"
+                            + ConsoleColors.YELLOW + "\n*Falta ajustar entrada do usuario" + ConsoleColors.RESET);
+            // command = in.nextLine();
+            // if (dirPath.contains("Node1Dir")) {
             command = in.nextLine();
+            // } else {
+            // command = "";
+            // }
+
             if (command.contains("download")) {
                 // lançar thread para download
                 // logica de conexão direta com sockets
@@ -62,6 +87,7 @@ public class Node extends Thread {
                 } catch (RemoteException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
+
                 }
             }
             System.out.println(response + "\n\n\n");
@@ -92,7 +118,7 @@ public class Node extends Thread {
                 // socket port will be +2 because the socketToRequest have already located this
                 // port+1
                 Socket socket = new Socket(ipToRequest, portToRequest + 1);
-                System.out.println("abrindo o socket para estabelecer conexão com o ssocket usando a porta: "
+                System.out.println("abrindo o socket para estabelecer conexão com o socket usando a porta: "
                         + (portToRequest + 1));
                 FileOutputStream fos = new FileOutputStream(this.dirPath + "/_" + this.downloadNumber + "_.txt");
                 this.downloadNumber++;

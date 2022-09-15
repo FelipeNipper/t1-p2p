@@ -13,16 +13,17 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SocketListener extends Thread {
-    private HashMap<Integer, String> resources;
+    private ConcurrentHashMap<Integer, String> resources;
     private int port;
     private DatagramSocket socket;
     private DatagramPacket packet;
     private byte[] resource;
     private String dirPath;
 
-    public SocketListener(int port, String dir, HashMap<Integer, String> resources) {
+    public SocketListener(int port, String dir, ConcurrentHashMap<Integer, String> resources) {
         this.dirPath = dir;
         this.resources = resources;
         this.port = port;
@@ -36,7 +37,7 @@ public class SocketListener extends Thread {
 
     @Override
     public void run() {
-        System.out.println("*---------- aguardando conexao com outros peers ----------*");
+        System.out.println("*---------- aguardando conexao com outros nodos ----------*");
         while (true) {
             try {
                 // espera receber o packet
@@ -60,7 +61,7 @@ public class SocketListener extends Thread {
                 } else {
                     System.out.println("erro, arquivo com hash: " + fileHash + " nao encontrado");
                     System.out.println("encerrando conexao");
-                    // @toDo metodo para finalizar a conexao com o peer
+                    // @toDo metodo para finalizar a conexao com o nodo
                     System.out.println("*---------- conexao encerrada ----------*");
                 }
 

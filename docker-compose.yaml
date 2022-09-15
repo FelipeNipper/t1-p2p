@@ -1,0 +1,72 @@
+# AINDA EM CONSTRUCAO, NAO ESTA LENDO O TERMINAL
+
+services:
+  super-node-1:
+    container_name: super-node-1
+    build: .
+    networks:
+      distribuida:
+        ipv4_address: 10.1.1.1
+    environment:
+      - type=SuperNode
+      - port=9000
+      - ip=10.1.1.1
+      - nextIp=10.1.1.2
+      - hasToken=1
+
+  super-node-2:
+    container_name: super-node-2
+    build: .
+    networks:
+      distribuida:
+        ipv4_address: 10.1.1.2
+    environment:
+      - type=SuperNode
+      - port=9000
+      - ip=10.1.1.2
+      - nextIp=10.1.1.1
+      - hasToken=0
+
+  node-1:
+    container_name: node-1
+    build: .
+    # stdin_open: true 
+    # tty: true
+    networks:
+      distribuida:
+        ipv4_address: 10.1.1.3
+    depends_on:
+      - super-node-1
+      - super-node-2
+      - node-2
+    environment:
+      - type=Node
+      - ip=10.1.1.3
+      - port=9000
+      - superNodeIp=10.1.1.1
+      - superNodePort=9000
+      - dir=Node1Dir
+    
+  node-2:
+    container_name: node-2
+    build: .
+    # stdin_open: true 
+    # tty: true
+    networks:
+      distribuida:
+        ipv4_address: 10.1.1.4
+    environment:
+      - type=Node
+      - ip=10.1.1.4
+      - port=9000
+      - superNodeIp=10.1.1.2
+      - superNodePort=9000
+      - dir=Node2Dir
+
+networks:
+  distribuida:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.1.1.0/8

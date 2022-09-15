@@ -1,3 +1,4 @@
 FROM openjdk:17
-COPY ./gradle/build/libs/t1-p2p-1.jar .
-CMD ["java","-jar","t1-p2p-1.jar"]
+WORKDIR /home/T1-P2P
+COPY . .
+CMD ["java","-jar","build/libs/t1-p2p-1.jar"]
