@@ -13,16 +13,17 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SocketListener extends Thread {
-    private HashMap<Integer, String> resources;
+    private ConcurrentHashMap<Integer, String> resources;
     private int port;
     private DatagramSocket socket;
     private DatagramPacket packet;
     private byte[] resource;
     private String dirPath;
 
-    public SocketListener(int port, String dir, HashMap<Integer, String> resources) {
+    public SocketListener(int port, String dir, ConcurrentHashMap<Integer, String> resources) {
         this.dirPath = dir;
         this.resources = resources;
         this.port = port;

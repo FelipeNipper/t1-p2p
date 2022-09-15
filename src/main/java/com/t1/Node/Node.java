@@ -12,6 +12,7 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.t1.ConsoleColors;
 import com.t1.SuperNode.SuperNodeInterface;
@@ -27,7 +28,8 @@ public class Node extends Thread {
     protected SuperNodeInterface server;
     protected SocketListener socketListener;
 
-    public Node(String ip, int port, String superNodeIp, int superNodePort, HashMap<Integer, String> resources,
+    public Node(String ip, int port, String superNodeIp, int superNodePort,
+            ConcurrentHashMap<Integer, String> resources,
             String dirPath)
             throws IOException {
         // vamos verificar se o servidor está funcionando para nos registrarmos
@@ -65,11 +67,11 @@ public class Node extends Thread {
             System.out.println(
                     "\nComandos para o servidor:\n\tfind <resource name>\n\tdownload <nodeIp>:<nodePort> <archive hash>"
                             + ConsoleColors.YELLOW + "\n*Falta ajustar entrada do usuario" + ConsoleColors.RESET);
-            command = in.nextLine();
+            // command = in.nextLine();
             // if (dirPath.contains("Node1Dir")) {
-            // command = "find teste";
+            command = in.nextLine();
             // } else {
-            // command = "find abaco";
+            // command = "";
             // }
 
             if (command.contains("download")) {
@@ -116,7 +118,7 @@ public class Node extends Thread {
                 // socket port will be +2 because the socketToRequest have already located this
                 // port+1
                 Socket socket = new Socket(ipToRequest, portToRequest + 1);
-                System.out.println("abrindo o socket para estabelecer conexão com o ssocket usando a porta: "
+                System.out.println("abrindo o socket para estabelecer conexão com o socket usando a porta: "
                         + (portToRequest + 1));
                 FileOutputStream fos = new FileOutputStream(this.dirPath + "/_" + this.downloadNumber + "_.txt");
                 this.downloadNumber++;

@@ -5,6 +5,7 @@ import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.t1.ConsoleColors;
 
@@ -13,11 +14,11 @@ import java.rmi.Naming;
 public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface {
 
 	// mapa de ip+port que devolve um mapa de recursos (hash, nome)
-	protected HashMap<String, HashMap<Integer, String>> myNodes;
+	protected ConcurrentHashMap<String, ConcurrentHashMap<Integer, String>> myNodes;
 	// mapa de ip+port que devolve quanto tempo o nodo esta sem mandar KeepAlive
-	protected HashMap<String, Integer> nodesTimeout;
+	protected ConcurrentHashMap<String, Integer> nodesTimeout;
 	// name <ip, hash>
-	protected HashMap<String, HashMap<String, String>> nodesResponses;
+	protected ConcurrentHashMap<String, ConcurrentHashMap<String, String>> nodesResponses;
 
 	protected SuperNodeInterface nextSuperNode;
 
@@ -30,9 +31,9 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	protected Boolean hasToken;
 
 	public SuperNode(String myAddr, int port, String nextAddr, Boolean hasToken) throws RemoteException {
-		myNodes = new HashMap<>();
-		nodesTimeout = new HashMap<>();
-		nodesResponses = new HashMap<>();
+		myNodes = new ConcurrentHashMap<>();
+		nodesTimeout = new ConcurrentHashMap<>();
+		nodesResponses = new ConcurrentHashMap<>();
 		this.myAddr = myAddr;
 		this.port = port;
 		this.nextAddr = nextAddr;
@@ -79,7 +80,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	 * Passando a porta que ele vai estar e um
 	 * HashMap<hash do nome do arquivo, nome do arquivo>
 	 */
-	public String register(int port, HashMap<Integer, String> resources) throws RemoteException {
+	public String register(int port, ConcurrentHashMap<Integer, String> resources) throws RemoteException {
 		System.out.println("Registrando o Node no SuperNode");
 		String ip = "";
 		String user_id = "";
@@ -96,6 +97,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		return user_id;
 	}
 
+	// Faz o find
 	public String commandHandler(String command) throws RemoteException {
 		// find 'nome do arquivo'
 		String[] vars = command.split(" ");
@@ -109,7 +111,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		switch (vars[0]) {
 			case "find":
 				System.out.println("\t" + ConsoleColors.BLUE + "PROCURANDO POR " + name + ConsoleColors.RESET);
-				HashMap<String, String> founded = findResource(name);
+				ConcurrentHashMap<String, String> founded = findResource(name);
 				return founded.toString();
 			// return "\nMock\n";
 			default:
@@ -117,10 +119,9 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		}
 	}
 
-	public HashMap<String, String> findResource(String resourceName) throws RemoteException {
+	public ConcurrentHashMap<String, String> findResource(String resourceName) throws RemoteException {
 		// ip + hash que tem o mesmo nome de arquivo
-		HashMap<String, String> resourceNodes = new HashMap<>();
-		// O SuperNode só procura quando ele tem o token?
+		ConcurrentHashMap<String, String> resourceNodes = new ConcurrentHashMap<>();
 		// TODO: Buscar no anel
 		while (hasToken != true) {
 			continue;
@@ -129,12 +130,12 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		return findResourceInThisNode(resourceName, resourceNodes);
 	}
 
-	public HashMap<String, String> findResourceInRing(String resourceName) {
-		HashMap<String, String> response = new HashMap<>();
+	public ConcurrentHashMap<String, String> findResourceInRing(String resourceName) {
+		ConcurrentHashMap<String, String> response = new ConcurrentHashMap<>();
 		try {
-			// buguei - como vai passar para o proximo
-			// magica do rmi?
+			System.out.println("Buscando no proximo");
 			this.nextSuperNode.sendResourceForNextNode(resourceName, myAddr, response);
+			// sendResourceForNextNode(resourceName, myAddr, response);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -148,7 +149,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		return response;
 	}
 
-	public void sendResourceForNextNode(String resourceName, String addr, HashMap<String, String> response)
+	public void sendResourceForNextNode(String resourceName, String addr, ConcurrentHashMap<String, String> response)
 			throws RemoteException {
 		if (!addr.equalsIgnoreCase(myAddr)) {
 			response = findResourceInThisNode(resourceName, response);
@@ -165,7 +166,8 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	// devolve um <ip, hash>
-	public HashMap<String, String> findResourceInThisNode(String resourceName, HashMap<String, String> resourceNodes) {
+	public ConcurrentHashMap<String, String> findResourceInThisNode(String resourceName,
+			ConcurrentHashMap<String, String> resourceNodes) {
 
 		myNodes.forEach((addr, resources) -> {
 			resources.forEach((hash, name) -> {
@@ -189,8 +191,11 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	// -
 
 	// devolve um <ip, hash>
-	public HashMap<String, String> searchInResponse(String resourceName) {
-		HashMap<String, String> response = new HashMap<>();
+	public ConcurrentHashMap<String, String> searchInResponse(String resourceName) {
+		System.out.println("AQUI");
+		ConcurrentHashMap<String, String> response = new ConcurrentHashMap<>();
+
+		System.out.println(nodesResponses.size());
 		nodesResponses.forEach((name, resources) -> {
 			if (name.contains(resourceName)) {
 				resources.forEach((addr, hash) -> {
@@ -204,13 +209,12 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 				});
 				nodesResponses.remove(name);
 			}
-
 		});
 		return response;
 	}
 
 	public void KeepAliveController() {
-		HashMap<String, Integer> nodesTimeoutAux = new HashMap<>();
+		ConcurrentHashMap<String, Integer> nodesTimeoutAux = new ConcurrentHashMap<>();
 
 		nodesTimeout.forEach((key, value) -> {
 			value--;

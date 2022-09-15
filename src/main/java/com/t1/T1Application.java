@@ -7,6 +7,7 @@ import java.rmi.NotBoundException;
 import java.rmi.registry.LocateRegistry;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.t1.Node.Node;
 import com.t1.SuperNode.SuperNode;
@@ -79,16 +80,16 @@ public class T1Application {
 		String dirPath = "src/main/java/com/t1/";
 
 		String dir = "";
-		if (System.getenv("dir").equalsIgnoreCase("Node2Dir")) {
-			dir = System.getenv("dir");
-		} else {
-			readPath(dirPath);
-			dir = in.next();
-		}
+		// if (System.getenv("dir").equalsIgnoreCase("Node2Dir")) {
+		dir = System.getenv("dir");
+		// } else {
+		// readPath(dirPath);
+		// dir = in.next();
+		// }
 
 		String allPath = dirPath + dir;
 		// FileTerminal.InputTempFile(allPath);
-		HashMap<Integer, String> resources = readPath(allPath);
+		ConcurrentHashMap<Integer, String> resources = readPath(allPath);
 		try {
 			System.out.println("WAIT");
 			Thread.sleep(5000);
@@ -102,15 +103,16 @@ public class T1Application {
 	 * Passa por todos os files do diretório recebido
 	 * HashMap com o <hash do nome, nome do arquivo>
 	 */
-	public static HashMap<Integer, String> readPath(String path) {
-		HashMap<Integer, String> resources = new HashMap<>();
+	public static ConcurrentHashMap<Integer, String> readPath(String path) {
+		ConcurrentHashMap<Integer, String> resources = new ConcurrentHashMap<>();
 		File folder = new File(path);
 		File[] listOfFiles = folder.listFiles();
 
 		for (int i = 0; i < listOfFiles.length; i++) {
 			if (listOfFiles[i].isFile()) {
-				resources.put(calculateHash(listOfFiles[i].getName()), listOfFiles[i].getName());
-				System.out.println("File " + listOfFiles[i].getName());
+				int hash = calculateHash(listOfFiles[i].getName());
+				resources.put(hash, listOfFiles[i].getName());
+				System.out.println("File " + listOfFiles[i].getName() + " -> " + hash);
 			} else if (listOfFiles[i].isDirectory()) {
 				System.out.println("Directory " + listOfFiles[i].getName());
 			}
