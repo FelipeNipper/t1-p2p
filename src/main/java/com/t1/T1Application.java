@@ -62,10 +62,11 @@ public class T1Application {
 		try {
 			// Registrando Rotas
 			String server = "rmi://" + superNodeIp + ":" + superNodePort + "/SuperNode";
-			SuperNodeInterface superNode = new SuperNode(superNodeIp, superNodePort,
-					nextSuperNodeIp, hasToken);
-			Naming.rebind(server, superNode);
-			superNode.connectNext();
+			// SuperNodeInterface superNode = new SuperNode(superNodeIp, superNodePort,
+			// 		nextSuperNodeIp, hasToken);
+			Naming.rebind(server, new SuperNode(superNodeIp, superNodePort,
+					nextSuperNodeIp, hasToken));
+			// superNode.connectNext();
 			System.out.println("P2P SuperNode is ready.");
 		} catch (Exception e) {
 			System.out.println(ConsoleColors.RED + "P2P SuperNode failed: " + e +
