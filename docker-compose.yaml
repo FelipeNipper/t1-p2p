@@ -13,6 +13,7 @@ services:
       - ip=10.1.1.1
       - nextIp=10.1.1.2
       - hasToken=1
+    entrypoint: java -jar build/libs/t1-p2p-1.jar
 
   super-node-2:
     container_name: super-node-2
@@ -26,12 +27,11 @@ services:
       - ip=10.1.1.2
       - nextIp=10.1.1.1
       - hasToken=0
+    entrypoint: java -jar build/libs/t1-p2p-1.jar
 
   node-1:
     container_name: node-1
     build: .
-    # stdin_open: true 
-    # tty: true
     networks:
       distribuida:
         ipv4_address: 10.1.1.3
@@ -47,12 +47,13 @@ services:
       - superNodePort=9000
       - dir=Node1Dir
       - terminal=Node1
+    # volumes:
+    #   - type: bind
+    entrypoint: java -jar build/libs/t1-p2p-1.jar
     
   node-2:
     container_name: node-2
     build: .
-    # stdin_open: true 
-    # tty: true
     networks:
       distribuida:
         ipv4_address: 10.1.1.4
@@ -64,6 +65,8 @@ services:
       - superNodePort=9000
       - dir=Node2Dir
       - terminal=Node2
+    entrypoint: java -jar build/libs/t1-p2p-1.jar
+
 
 networks:
   distribuida:

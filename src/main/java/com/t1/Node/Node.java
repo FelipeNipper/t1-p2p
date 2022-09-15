@@ -63,8 +63,9 @@ public class Node extends Thread {
                         "Comandos para o SUPER NODO:  \n\tfind <nome do arquivo> \n\tdownload <ip>:<port> <hash> \n\tall \n\texit");
 
                 while (command == null || command.equalsIgnoreCase("")) {
-                    command = FileTerminal.InputFile("src/main/java/com/t1/Terminal/Node1.txt");
+                    command = FileTerminal.inputFile(terminalPath);
                 }
+                // FileTerminal.cleanFile(terminalPath);
                 String[] exec = command.split(" ");
                 switch (exec[0]) {
                     case "find":
@@ -80,7 +81,7 @@ public class Node extends Thread {
                         // fazer desconectar
                         return;
                     default:
-                        System.out.println(ConsoleColors.RED + "Comando inválido" + ConsoleColors.RESET);
+                        System.out.println(ConsoleColors.RED + "Comando inválido: " + command + ConsoleColors.RESET);
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());

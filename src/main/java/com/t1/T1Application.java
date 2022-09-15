@@ -28,22 +28,24 @@ public class T1Application {
 	private static boolean hasToken;
 
 	public static void main(String[] args) throws InterruptedException, IOException {
-
-		// SuperNode
-		if (System.getenv("type").equalsIgnoreCase("SuperNode")) {
-			superNodeIp = System.getenv("ip");
-			superNodePort = Integer.parseInt(System.getenv("port"));
-			nextSuperNodeIp = System.getenv("nextIp");
-			hasToken = System.getenv("hasToken").equalsIgnoreCase("1") ? true : false;
-
-			SuperNodeCreate();
-		} else {
-			nodeIp = System.getenv("ip");
-			nodePort = Integer.parseInt(System.getenv("port"));
-			superNodeIp = System.getenv("superNodeIp");
-			superNodePort = Integer.parseInt(System.getenv("superNodePort"));
-			NodeCreate();
-		}
+		testeee();
+		/*
+		 * // SuperNode
+		 * if (System.getenv("type").equalsIgnoreCase("SuperNode")) {
+		 * superNodeIp = System.getenv("ip");
+		 * superNodePort = Integer.parseInt(System.getenv("port"));
+		 * nextSuperNodeIp = System.getenv("nextIp");
+		 * hasToken = System.getenv("hasToken").equalsIgnoreCase("1") ? true : false;
+		 * 
+		 * SuperNodeCreate();
+		 * } else {
+		 * nodeIp = System.getenv("ip");
+		 * nodePort = Integer.parseInt(System.getenv("port"));
+		 * superNodeIp = System.getenv("superNodeIp");
+		 * superNodePort = Integer.parseInt(System.getenv("superNodePort"));
+		 * NodeCreate();
+		 * }
+		 */
 	}
 
 	public static void SuperNodeCreate() {
@@ -119,17 +121,77 @@ public class T1Application {
 		return name.hashCode();
 	}
 
-}
+	// }
 
-/*
- * String command = null;
- * System.out.println(
- * "Comandos para o SUPER NODO:  \n[ find <nome do arquivo> ]\n[ download <ip>:<port> <hash> ]\n[ all ]\n[ exit ]"
- * );
- * // command = in.nextLine();
- * while (command == null || command.equalsIgnoreCase("")) {
- * command = FileTerminal.InputFile("src/main/java/com/t1/Terminal/Node1.txt");
- * }
- * System.out.println("sad " + command);
- * }
- */
+	/*
+	 * String command = null;
+	 * System.out.println(
+	 * "Comandos para o SUPER NODO:  \n[ find <nome do arquivo> ]\n[ download <ip>:<port> <hash> ]\n[ all ]\n[ exit ]"
+	 * );
+	 * // command = in.nextLine();
+	 * while (command == null || command.equalsIgnoreCase("")) {
+	 * command = FileTerminal.inputFile("src/main/java/com/t1/Terminal/Node1.txt");
+	 * }
+	 * System.out.println("sad " + command);
+	 * }
+	 */
+
+	public static void testeee() throws IOException {
+		String command = "";
+		String terminalPath = "src/main/java/com/t1/Terminal/Node1.txt";
+		while (true) {
+			System.out.println(
+					"Comandos para o SUPER NODO:  \n[ find <nome do arquivo> ]\n[ download <ip>:<port> <hash> ]\n[ all ]\n[ exit ]");
+			// command = in.nextLine();
+			while (command == null || command.equalsIgnoreCase("")) {
+				command = FileTerminal.inputFile("src/main/java/com/t1/Terminal/Node1.txt");
+			}
+			System.out.println("sad " + command);
+		}
+		/*
+		 * 
+		 * 
+		 * while (true) {
+		 * try {
+		 * System.out.println(
+		 * "Comandos para o SUPER NODO:  \n\tfind <nome do arquivo> \n\tdownload <ip>:<port> <hash> \n\tall \n\texit"
+		 * );
+		 * 
+		 * while (command == null || command.equalsIgnoreCase("")) {
+		 * command = FileTerminal.inputFile(terminalPath);
+		 * }
+		 * // FileTerminal.cleanFile(terminalPath);
+		 * // System.out.println("command -> " + command);
+		 * String[] exec = command.split(" ");
+		 * switch (exec[0]) {
+		 * case "find":
+		 * // System.out.println("Response => " + mySuperNode.findHandler(exec[1]));
+		 * System.out.println("find");
+		 * break;
+		 * case "download":
+		 * System.out.println("download");
+		 * 
+		 * // downloadFile(exec[1], Integer.parseInt(exec[2]));
+		 * break;
+		 * case "all":
+		 * System.out.println("all");
+		 * 
+		 * // mySuperNode.getAllHash()
+		 * break;
+		 * case "exit":
+		 * System.out.println("exit");
+		 * 
+		 * // fazer desconectar
+		 * return;
+		 * default:
+		 * System.out.println(ConsoleColors.RED + "Comando inválido: " + command +
+		 * ConsoleColors.RESET);
+		 * }
+		 * } catch (Exception e) {
+		 * System.out.println(e.getMessage());
+		 * return;
+		 * }
+		 * }
+		 */
+	}
+}
