@@ -44,7 +44,7 @@ public class SocketListener extends Thread {
                 packet = new DatagramPacket(resource, resource.length);
                 socket.setSoTimeout(500);
                 socket.receive(packet);
-                System.out.print("*--------------------*\nRecebi uma solicitacao de download");
+                System.out.print("Recebi uma solicitacao de download\n");
 
                 // processa o que foi recebido
                 String content = new String(packet.getData(), 0, packet.getLength());
@@ -73,13 +73,12 @@ public class SocketListener extends Thread {
     public boolean sendContent(InetAddress addr, int port, int fileHash) {
         try {
             // Initialize Sockets
-            ServerSocket ssock = new ServerSocket(this.port + 1);
-            System.out.println("abri o server socket com a porta" + (this.port + 1) +
+            ServerSocket sock = new ServerSocket(this.port + 1);
+            System.out.println("abri o server socket com a porta " + (this.port + 1) +
                     "\n aguardando a abertura de conexão pelo lado do client");
-            Socket socket = ssock.accept();
+            Socket socket = sock.accept();
             System.out.println("conexão aceita");
             // The InetAddress specification
-            InetAddress IA = InetAddress.getByName("localhost");
 
             // Specify the file
             File file = new File(this.dirPath + "/" + this.resources.get(fileHash));
@@ -108,7 +107,7 @@ public class SocketListener extends Thread {
             os.flush();
             // File transfer done. Close the socket connection!
             socket.close();
-            ssock.close();
+            sock.close();
             System.out.println("File sent succesfully!");
         } catch (UnknownHostException e) {
         } catch (IOException e) {

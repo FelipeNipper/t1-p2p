@@ -14,9 +14,11 @@ import java.rmi.Naming;
 public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface {
 
 	// mapa de ip+port que devolve um mapa de recursos (hash, nome)
-	protected ConcurrentHashMap<String, ConcurrentHashMap<Integer, String>> myNodes;
+	protected ConcurrentHashMap<String, ConcurrentHashMap<Integer, String>> myResources;
+
 	// mapa de ip+port que devolve quanto tempo o nodo esta sem mandar KeepAlive
 	protected ConcurrentHashMap<String, Integer> nodesTimeout;
+
 	// name <ip, hash>
 	protected ConcurrentHashMap<String, ConcurrentHashMap<String, String>> nodesResponses;
 
@@ -26,18 +28,21 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 
 	protected int port;
 
+	protected int minHash;
+
+	protected int maxHash;
+
 	protected String nextAddr;
 
-	protected Boolean hasToken;
-
-	public SuperNode(String myAddr, int port, String nextAddr, Boolean hasToken) throws RemoteException {
-		myNodes = new ConcurrentHashMap<>();
+	public SuperNode(String myAddr, int port, String nextAddr, int minHash, int maxHash) throws RemoteException {
+		myResources = new ConcurrentHashMap<>();
 		nodesTimeout = new ConcurrentHashMap<>();
 		nodesResponses = new ConcurrentHashMap<>();
 		this.myAddr = myAddr;
 		this.port = port;
 		this.nextAddr = nextAddr;
-		this.hasToken = hasToken;
+		this.minHash = minHash;
+		this.maxHash = maxHash;
 		new Thread(() -> {
 			while (true) {
 				KeepAliveController();
@@ -45,9 +50,6 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 					Thread.sleep(10000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
-				}
-				if (hasToken) {
-					// passa token
 				}
 			}
 		}).start();
@@ -80,52 +82,62 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	 * Passando a porta que ele vai estar e um
 	 * HashMap<hash do nome do arquivo, nome do arquivo>
 	 */
-	public String register(int port, ConcurrentHashMap<Integer, String> resources) throws RemoteException {
-		System.out.println("Registrando o Node no SuperNode");
-		String ip = "";
-		String user_id = "";
-		try {
-			ip = RemoteServer.getClientHost();
-			user_id = ip + ":" + port;
-			System.out.println(user_id);
-			// o SuperNode guarda a porta do node junto com o
-			// HashMap <hash do nome do arquivo, nome do arquivo>
-			myNodes.put(user_id, resources);
-		} catch (ServerNotActiveException e) {
-			e.printStackTrace();
+	public String register(String ip, int port, ConcurrentHashMap<Integer, String> resources) throws RemoteException {
+		String node = ip + ":" + port;
+		// myResources.put(node, resources); // calcular para ver em qual supernode vai
+		// ficar a hash
+		resources.forEach((hash, fileName) -> {
+			try {
+				ConcurrentHashMap<Integer, String> specificResource = new ConcurrentHashMap<>();
+				specificResource.put(hash, fileName);
+				if (minHash <= hash && hash < maxHash) {
+					System.out.println("\tGuardando hash " + hash + " no super node de ip " + myAddr);
+					if (myResources.containsKey(node)) {
+						myResources.get(node).put(hash, fileName);
+					} else {
+						myResources.put(node, specificResource);
+					}
+				} else {
+					nextSuperNode.findRightSuperNodeToStoreHash(node, specificResource, hash, fileName);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+		return node;
+	}
+
+	public void findRightSuperNodeToStoreHash(String node, ConcurrentHashMap<Integer, String> specificResource,
+			int hash, String fileName)
+			throws RemoteException {
+		if (minHash <= hash && hash < maxHash) {
+			System.out.println("\tGuardando hash " + hash + " no super node de ip " + myAddr);
+			if (myResources.containsKey(node)) {
+				myResources.get(node).put(hash, fileName);
+			} else {
+				myResources.put(node, specificResource);
+			}
+		} else {
+			nextSuperNode.findRightSuperNodeToStoreHash(node, specificResource, hash, fileName);
 		}
-		return user_id;
 	}
 
 	// Faz o find
-	public String commandHandler(String command) throws RemoteException {
-		// find 'nome do arquivo'
-		String[] vars = command.split(" ");
-		String name = "";
-		// vai armazenar o nome de todos os arquivos solicitados?
-		for (int i = 1; i < vars.length; i++) {
-			// ! aqui ele nao vai armazenar colado? se é pedido 'find teste test', a string
-			// name vai ser testetest
-			name += vars[i];
-		}
-		switch (vars[0]) {
-			case "find":
-				System.out.println("\t" + ConsoleColors.BLUE + "PROCURANDO POR " + name + ConsoleColors.RESET);
-				ConcurrentHashMap<String, String> founded = findResource(name);
-				return founded.toString();
-			// return "\nMock\n";
-			default:
-				return "invalid command";
-		}
+	public String findHandler(String fileName) throws RemoteException {
+		System.out.println("\t" + ConsoleColors.BLUE + "PROCURANDO POR " + fileName + ConsoleColors.RESET);
+		ConcurrentHashMap<String, String> founded = findResource(fileName);
+		return founded.toString();
+	}
+
+	public String allHandler() throws RemoteException {
+		System.out.println("\t" + ConsoleColors.BLUE + "PROCURANDO POR TODOS" + ConsoleColors.RESET);
+		ConcurrentHashMap<String, String> founded = findResource("");
+		return founded.toString();
 	}
 
 	public ConcurrentHashMap<String, String> findResource(String resourceName) throws RemoteException {
 		// ip + hash que tem o mesmo nome de arquivo
 		ConcurrentHashMap<String, String> resourceNodes = new ConcurrentHashMap<>();
-		// TODO: Buscar no anel
-		while (hasToken != true) {
-			continue;
-		}
 		resourceNodes = findResourceInRing(resourceName);
 		return findResourceInThisNode(resourceName, resourceNodes);
 	}
@@ -134,8 +146,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		ConcurrentHashMap<String, String> response = new ConcurrentHashMap<>();
 		try {
 			System.out.println("Buscando no proximo");
-			this.nextSuperNode.sendResourceForNextNode(resourceName, myAddr, response);
-			// sendResourceForNextNode(resourceName, myAddr, response);
+			nextSuperNode.sendResourceForNextNode(resourceName, myAddr, response);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -154,24 +165,27 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		if (!addr.equalsIgnoreCase(myAddr)) {
 			response = findResourceInThisNode(resourceName, response);
 			response.put("0.0.0.0", myAddr);
-			this.nextSuperNode.sendResourceForNextNode(resourceName, addr, response);
+			nextSuperNode.sendResourceForNextNode(resourceName, addr, response);
 		} else {
 			// TODO: adicionar na response
 			nodesResponses.put(resourceName, response);
-			if (this.hasToken) {
-				this.hasToken = false;
-				this.nextSuperNode.sendToken();
-			}
 		}
 	}
 
 	// devolve um <ip, hash>
 	public ConcurrentHashMap<String, String> findResourceInThisNode(String resourceName,
 			ConcurrentHashMap<String, String> resourceNodes) {
-
-		myNodes.forEach((addr, resources) -> {
+		myResources.forEach((addr, resources) -> {
 			resources.forEach((hash, name) -> {
 				if (name.contains(resourceName)) {
+					if (resourceNodes.containsKey(addr)) {
+						// Mais de um file
+						resourceNodes.put(addr, resourceNodes.get(addr) + "," + hash);
+					} else {
+						// Novo
+						resourceNodes.put(addr, "" + hash);
+					}
+				} else if (resourceName.equalsIgnoreCase("")) {
 					if (resourceNodes.containsKey(addr)) {
 						// Mais de um file
 						resourceNodes.put(addr, resourceNodes.get(addr) + "," + hash);
@@ -185,14 +199,8 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		return resourceNodes;
 	}
 
-	// Outra thread
-	// Escuta o token ring e :
-	// - Receber um request de file -> findResource
-	// -
-
 	// devolve um <ip, hash>
 	public ConcurrentHashMap<String, String> searchInResponse(String resourceName) {
-		System.out.println("AQUI");
 		ConcurrentHashMap<String, String> response = new ConcurrentHashMap<>();
 
 		System.out.println(nodesResponses.size());
@@ -208,6 +216,16 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 					}
 				});
 				nodesResponses.remove(name);
+			} else if (resourceName.equalsIgnoreCase("")) {
+				resources.forEach((addr, hash) -> {
+					if (response.containsKey(addr)) {
+						// Mais de um file
+						response.put(addr, response.get(addr) + "," + hash);
+					} else {
+						// Novo
+						response.put(addr, "" + hash);
+					}
+				});
 			}
 		});
 		return response;
@@ -229,16 +247,11 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	public void disconnect(String id) {
-		myNodes.remove(id);
+		myResources.remove(id);
 	}
 
 	public void KeepAlive(String id) throws RemoteException {
 		nodesTimeout.put(id, 3);
 		System.out.println(id + ":.......... still here");
-	}
-
-	public void sendToken() throws RemoteException {
-		this.hasToken = true;
-
 	}
 }

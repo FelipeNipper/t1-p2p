@@ -23,17 +23,30 @@ public class T1Application {
 
 	private static String nodeIp;
 
+	private static String position;
+
 	private static int nodePort;
 
-	private static boolean hasToken;
+	private static int minHash = Integer.MIN_VALUE;
 
-	public static void main(String[] args) throws InterruptedException {
+	private static int rangeHash;
+
+	private static int superNodeSpace;
+
+	private static double totalHash = 4294967296.0;
+
+	public static void main(String[] args) throws InterruptedException, IOException {
+
 		// SuperNode
 		if (System.getenv("type").equalsIgnoreCase("SuperNode")) {
+			int numSuperNode = 4;
+			rangeHash = (int) totalHash / numSuperNode;
+			superNodeSpace = (rangeHash * Integer.parseInt(System.getenv("position"))) + minHash;
+
 			superNodeIp = System.getenv("ip");
 			superNodePort = Integer.parseInt(System.getenv("port"));
 			nextSuperNodeIp = System.getenv("nextIp");
-			hasToken = System.getenv("hasToken").equalsIgnoreCase("1") ? true : false;
+			position = System.getenv("position");
 
 			SuperNodeCreate();
 		} else {
@@ -43,10 +56,12 @@ public class T1Application {
 			superNodePort = Integer.parseInt(System.getenv("superNodePort"));
 			NodeCreate();
 		}
+
 	}
 
 	public static void SuperNodeCreate() {
-		System.out.println("\n" + ConsoleColors.GREEN_BOLD + " -----------> Criando SuperNode <----------"
+		System.out.println("\n" + ConsoleColors.GREEN_BOLD +
+				" -----------> Criando SuperNode <----------"
 				+ ConsoleColors.RESET + "\n");
 		try {
 			// Inicializando Servidor RMI
@@ -58,42 +73,34 @@ public class T1Application {
 		try {
 			// Registrando Rotas
 			String server = "rmi://" + superNodeIp + ":" + superNodePort + "/SuperNode";
-			SuperNodeInterface superNode = new SuperNode(superNodeIp, superNodePort, nextSuperNodeIp, hasToken);
+			SuperNodeInterface superNode = new SuperNode(superNodeIp, superNodePort,
+					nextSuperNodeIp, superNodeSpace, superNodeSpace + rangeHash);
 			Naming.rebind(server, superNode);
 			superNode.connectNext();
 			System.out.println("P2P SuperNode is ready.");
 		} catch (Exception e) {
-			System.out.println(ConsoleColors.RED + "P2P SuperNode failed: " + e + ConsoleColors.RESET);
+			System.out.println(ConsoleColors.RED + "P2P SuperNode failed: " + e +
+					ConsoleColors.RESET);
 		}
 	}
 
-	public static void NodeCreate() throws InterruptedException {
+	public static void NodeCreate() throws InterruptedException, IOException {
 		System.out
-				.println("\n" + ConsoleColors.GREEN_BOLD + "-----------> Criando node com os seus arquivos <----------"
+				.println("\n" + ConsoleColors.GREEN_BOLD +
+						"-----------> Criando node com os seus arquivos <----------"
 						+ ConsoleColors.RESET + "\n");
-		Scanner in = new Scanner(System.in);
 
-		System.out.println(
-				"\nDigite o path para um diretorio de arquivos: \n"
-						+ ConsoleColors.YELLOW + " \n*Falta ajustar entrada do usuario" + ConsoleColors.RESET);
+		// String dir = System.getenv("dir");
+		String dirPath = "src/main/java/com/t1/Resources/" + System.getenv("dir");
+		String terminalPath = "src/main/java/com/t1/Terminal/" +
+				System.getenv("terminal") + ".txt";
 
-		String dirPath = "src/main/java/com/t1/";
-
-		String dir = "";
-		// if (System.getenv("dir").equalsIgnoreCase("Node2Dir")) {
-		dir = System.getenv("dir");
-		// } else {
-		// readPath(dirPath);
-		// dir = in.next();
-		// }
-
-		String allPath = dirPath + dir;
-		// FileTerminal.InputTempFile(allPath);
-		ConcurrentHashMap<Integer, String> resources = readPath(allPath);
+		ConcurrentHashMap<Integer, String> resources = readPath(dirPath);
 		try {
-			System.out.println("WAIT");
+			System.out.println("WAIT SUPER NODES CONNECT");
 			Thread.sleep(5000);
-			new Node(nodeIp, nodePort, superNodeIp, superNodePort, resources, dir).start();
+			new Node(nodeIp, nodePort, superNodeIp, superNodePort, resources, dirPath,
+					terminalPath).start();
 		} catch (IOException e) {
 
 		}
@@ -103,21 +110,18 @@ public class T1Application {
 	 * Passa por todos os files do diretório recebido
 	 * HashMap com o <hash do nome, nome do arquivo>
 	 */
-	public static ConcurrentHashMap<Integer, String> readPath(String path) {
+	public static ConcurrentHashMap<Integer, String> readPath(String path) throws IOException {
 		ConcurrentHashMap<Integer, String> resources = new ConcurrentHashMap<>();
 		File folder = new File(path);
 		File[] listOfFiles = folder.listFiles();
 
 		for (int i = 0; i < listOfFiles.length; i++) {
 			if (listOfFiles[i].isFile()) {
-				int hash = calculateHash(listOfFiles[i].getName());
+				// int hash = calculateHash(listOfFiles[i].getName());
+				int hash = FileTerminal.hashFile(listOfFiles[i]);
 				resources.put(hash, listOfFiles[i].getName());
-				System.out.println("File " + listOfFiles[i].getName() + " -> " + hash);
-			} else if (listOfFiles[i].isDirectory()) {
-				System.out.println("Directory " + listOfFiles[i].getName());
 			}
 		}
-
 		return resources;
 	}
 
@@ -125,3 +129,7 @@ public class T1Application {
 		return name.hashCode();
 	}
 }
+
+// ver range
+// hash do conteudo do arquivo - ver
+// download
