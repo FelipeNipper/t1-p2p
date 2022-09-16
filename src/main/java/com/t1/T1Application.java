@@ -23,18 +23,30 @@ public class T1Application {
 
 	private static String nodeIp;
 
-	private static String hashRange;
+	private static String position;
 
 	private static int nodePort;
 
+	private static int minHash = Integer.MIN_VALUE;
+
+	private static int rangeHash;
+
+	private static int superNodeSpace;
+
+	private static double totalHash = 4294967296.0;
+
 	public static void main(String[] args) throws InterruptedException, IOException {
-		// testeee();
+
 		// SuperNode
 		if (System.getenv("type").equalsIgnoreCase("SuperNode")) {
+			int numSuperNode = 4;
+			rangeHash = (int) totalHash / numSuperNode;
+			superNodeSpace = (rangeHash * Integer.parseInt(System.getenv("position"))) + minHash;
+
 			superNodeIp = System.getenv("ip");
 			superNodePort = Integer.parseInt(System.getenv("port"));
 			nextSuperNodeIp = System.getenv("nextIp");
-			hashRange = System.getenv("hashRange");
+			position = System.getenv("position");
 
 			SuperNodeCreate();
 		} else {
@@ -62,7 +74,7 @@ public class T1Application {
 			// Registrando Rotas
 			String server = "rmi://" + superNodeIp + ":" + superNodePort + "/SuperNode";
 			SuperNodeInterface superNode = new SuperNode(superNodeIp, superNodePort,
-					nextSuperNodeIp, hashRange);
+					nextSuperNodeIp, superNodeSpace, superNodeSpace + rangeHash);
 			Naming.rebind(server, superNode);
 			superNode.connectNext();
 			System.out.println("P2P SuperNode is ready.");
@@ -72,7 +84,7 @@ public class T1Application {
 		}
 	}
 
-	public static void NodeCreate() throws InterruptedException {
+	public static void NodeCreate() throws InterruptedException, IOException {
 		System.out
 				.println("\n" + ConsoleColors.GREEN_BOLD +
 						"-----------> Criando node com os seus arquivos <----------"
@@ -85,8 +97,8 @@ public class T1Application {
 
 		ConcurrentHashMap<Integer, String> resources = readPath(dirPath);
 		try {
-			System.out.println("WAIT");
-			Thread.sleep(2000);
+			System.out.println("WAIT SUPER NODES CONNECT");
+			Thread.sleep(5000);
 			new Node(nodeIp, nodePort, superNodeIp, superNodePort, resources, dirPath,
 					terminalPath).start();
 		} catch (IOException e) {
@@ -98,98 +110,26 @@ public class T1Application {
 	 * Passa por todos os files do diretório recebido
 	 * HashMap com o <hash do nome, nome do arquivo>
 	 */
-	public static ConcurrentHashMap<Integer, String> readPath(String path) {
+	public static ConcurrentHashMap<Integer, String> readPath(String path) throws IOException {
 		ConcurrentHashMap<Integer, String> resources = new ConcurrentHashMap<>();
 		File folder = new File(path);
 		File[] listOfFiles = folder.listFiles();
 
 		for (int i = 0; i < listOfFiles.length; i++) {
 			if (listOfFiles[i].isFile()) {
-				int hash = calculateHash(listOfFiles[i].getName());
+				// int hash = calculateHash(listOfFiles[i].getName());
+				int hash = FileTerminal.hashFile(listOfFiles[i]);
 				resources.put(hash, listOfFiles[i].getName());
-				// System.out.println("File " + listOfFiles[i].getName());
-			} // else if (listOfFiles[i].isDirectory()) {
-				// System.out.println("Directory " + listOfFiles[i].getName());
-				// }
+			}
 		}
-
 		return resources;
 	}
 
 	public static int calculateHash(String name) {
 		return name.hashCode();
 	}
-
-	// }
-
-	/*
-	 * String command = null;
-	 * System.out.println(
-	 * "Comandos para o SUPER NODO:  \n[ find <nome do arquivo> ]\n[ download <ip>:<port> <hash> ]\n[ all ]\n[ exit ]"
-	 * );
-	 * // command = in.nextLine();
-	 * while (command == null || command.equalsIgnoreCase("")) {
-	 * command = FileTerminal.inputFile("src/main/java/com/t1/Terminal/Node1.txt");
-	 * }
-	 * System.out.println("sad " + command);
-	 * }
-	 */
-
-	public static void testeee() throws IOException {
-		String command;
-		String terminalPath = "src/main/java/com/t1/Terminal/Node1.txt";
-		// while (true) {
-		// command = "";
-		// System.out.println(
-		// "Comandos para o SUPER NODO: \n[ find <nome do arquivo> ]\n[ download
-		// <ip>:<port> <hash> ]\n[ all ]\n[ exit ]");
-		// // command = in.nextLine();
-		// while (command == null || command.equalsIgnoreCase("")) {
-		// command = FileTerminal.inputFile(terminalPath);
-		// }
-		// System.out.println("sad " + command);
-		// }
-
-		while (true) {
-			try {
-				command = "";
-				FileTerminal.cleanFile(terminalPath);
-				System.out.println(
-						"Comandos para o SUPER NODO: \n[ find <nome do arquivo> ]\n[ download <ip>:<port> <hash> ]\n[ all ]\n[ exit ]");
-
-				while (command == null || command.equalsIgnoreCase("")) {
-					command = FileTerminal.inputFile(terminalPath);
-				}
-				String[] exec = command.split(" ");
-				switch (exec[0]) {
-					case "find":
-						// System.out.println("Response => " + mySuperNode.findHandler(exec[1]));
-						System.out.println("find");
-						break;
-					case "download":
-						System.out.println("download");
-
-						// downloadFile(exec[1], Integer.parseInt(exec[2]));
-						break;
-					case "all":
-						System.out.println("all");
-
-						// mySuperNode.getAllHash()
-						break;
-					case "exit":
-						System.out.println("exit");
-
-						// fazer desconectar
-						return;
-					default:
-						System.out.println(ConsoleColors.RED + "Comando inválido: " + command +
-								ConsoleColors.RESET);
-				}
-			} catch (Exception e) {
-				System.out.println(e.getMessage());
-				return;
-			}
-		}
-
-	}
 }
+
+// ver range
+// hash do conteudo do arquivo - ver
+// download

@@ -28,18 +28,21 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 
 	protected int port;
 
+	protected int minHash;
+
+	protected int maxHash;
+
 	protected String nextAddr;
 
-	protected String hashRange;
-
-	public SuperNode(String myAddr, int port, String nextAddr, String hashRange) throws RemoteException {
+	public SuperNode(String myAddr, int port, String nextAddr, int minHash, int maxHash) throws RemoteException {
 		myResources = new ConcurrentHashMap<>();
 		nodesTimeout = new ConcurrentHashMap<>();
 		nodesResponses = new ConcurrentHashMap<>();
 		this.myAddr = myAddr;
 		this.port = port;
 		this.nextAddr = nextAddr;
-		this.hashRange = hashRange;
+		this.minHash = minHash;
+		this.maxHash = maxHash;
 		new Thread(() -> {
 			while (true) {
 				KeepAliveController();
@@ -80,32 +83,42 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	 * HashMap<hash do nome do arquivo, nome do arquivo>
 	 */
 	public String register(String ip, int port, ConcurrentHashMap<Integer, String> resources) throws RemoteException {
-		System.out.println("Registrando o Node no SuperNode");
 		String node = ip + ":" + port;
 		// myResources.put(node, resources); // calcular para ver em qual supernode vai
 		// ficar a hash
 		resources.forEach((hash, fileName) -> {
 			try {
-
 				ConcurrentHashMap<Integer, String> specificResource = new ConcurrentHashMap<>();
 				specificResource.put(hash, fileName);
-				int hashBetween = hash % 4;
-				nextSuperNode.findRightSuperNodeToStoreHash(node, specificResource, "" + hashBetween);
+				if (minHash <= hash && hash < maxHash) {
+					System.out.println("\tGuardando hash " + hash + " no super node de ip " + myAddr);
+					if (myResources.containsKey(node)) {
+						myResources.get(node).put(hash, fileName);
+					} else {
+						myResources.put(node, specificResource);
+					}
+				} else {
+					nextSuperNode.findRightSuperNodeToStoreHash(node, specificResource, hash, fileName);
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		});
-
 		return node;
 	}
 
 	public void findRightSuperNodeToStoreHash(String node, ConcurrentHashMap<Integer, String> specificResource,
-			String hashBetween)
+			int hash, String fileName)
 			throws RemoteException {
-		if (!hashRange.equalsIgnoreCase(hashBetween)) {
-			nextSuperNode.findRightSuperNodeToStoreHash(node, specificResource, hashBetween);
+		if (minHash <= hash && hash < maxHash) {
+			System.out.println("\tGuardando hash " + hash + " no super node de ip " + myAddr);
+			if (myResources.containsKey(node)) {
+				myResources.get(node).put(hash, fileName);
+			} else {
+				myResources.put(node, specificResource);
+			}
 		} else {
-			myResources.put(node, specificResource);
+			nextSuperNode.findRightSuperNodeToStoreHash(node, specificResource, hash, fileName);
 		}
 	}
 
@@ -162,7 +175,6 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	// devolve um <ip, hash>
 	public ConcurrentHashMap<String, String> findResourceInThisNode(String resourceName,
 			ConcurrentHashMap<String, String> resourceNodes) {
-
 		myResources.forEach((addr, resources) -> {
 			resources.forEach((hash, name) -> {
 				if (name.contains(resourceName)) {

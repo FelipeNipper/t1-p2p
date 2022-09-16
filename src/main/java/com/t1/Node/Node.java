@@ -57,7 +57,7 @@ public class Node extends Thread {
     public void run() {
         String command = "";
 
-        while (true && !command.equalsIgnoreCase("exit")) {
+        while (!command.equalsIgnoreCase("exit")) {
             try {
                 command = "";
                 FileTerminal.cleanFile(terminalPath);
@@ -86,7 +86,6 @@ public class Node extends Thread {
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
-                return;
             }
         }
     }
