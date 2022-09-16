@@ -13,6 +13,8 @@ public interface SuperNodeInterface extends Remote {
 
     public String findHandler(String fileName) throws RemoteException;
 
+    public String allHandler() throws RemoteException;
+
     public ConcurrentHashMap<String, String> findResource(String resourceName) throws RemoteException;
 
     public void KeepAlive(String id) throws RemoteException;
@@ -23,6 +25,4 @@ public interface SuperNodeInterface extends Remote {
 
     public void sendResourceForNextNode(String resourceName, String addr, ConcurrentHashMap<String, String> response)
             throws RemoteException;
-
-    public void sendToken() throws RemoteException;
 }

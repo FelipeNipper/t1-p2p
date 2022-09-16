@@ -25,27 +25,23 @@ public class T1Application {
 
 	private static int nodePort;
 
-	private static boolean hasToken;
-
 	public static void main(String[] args) throws InterruptedException, IOException {
-		testeee();
-		/*
-		 * // SuperNode
-		 * if (System.getenv("type").equalsIgnoreCase("SuperNode")) {
-		 * superNodeIp = System.getenv("ip");
-		 * superNodePort = Integer.parseInt(System.getenv("port"));
-		 * nextSuperNodeIp = System.getenv("nextIp");
-		 * hasToken = System.getenv("hasToken").equalsIgnoreCase("1") ? true : false;
-		 * 
-		 * SuperNodeCreate();
-		 * } else {
-		 * nodeIp = System.getenv("ip");
-		 * nodePort = Integer.parseInt(System.getenv("port"));
-		 * superNodeIp = System.getenv("superNodeIp");
-		 * superNodePort = Integer.parseInt(System.getenv("superNodePort"));
-		 * NodeCreate();
-		 * }
-		 */
+		// testeee();
+		// SuperNode
+		if (System.getenv("type").equalsIgnoreCase("SuperNode")) {
+			superNodeIp = System.getenv("ip");
+			superNodePort = Integer.parseInt(System.getenv("port"));
+			nextSuperNodeIp = System.getenv("nextIp");
+
+			SuperNodeCreate();
+		} else {
+			nodeIp = System.getenv("ip");
+			nodePort = Integer.parseInt(System.getenv("port"));
+			superNodeIp = System.getenv("superNodeIp");
+			superNodePort = Integer.parseInt(System.getenv("superNodePort"));
+			NodeCreate();
+		}
+
 	}
 
 	public static void SuperNodeCreate() {
@@ -62,11 +58,10 @@ public class T1Application {
 		try {
 			// Registrando Rotas
 			String server = "rmi://" + superNodeIp + ":" + superNodePort + "/SuperNode";
-			// SuperNodeInterface superNode = new SuperNode(superNodeIp, superNodePort,
-			// nextSuperNodeIp, hasToken);
-			Naming.rebind(server, new SuperNode(superNodeIp, superNodePort,
-					nextSuperNodeIp, hasToken));
-			// superNode.connectNext();
+			SuperNodeInterface superNode = new SuperNode(superNodeIp, superNodePort,
+					nextSuperNodeIp);
+			Naming.rebind(server, superNode);
+			superNode.connectNext();
 			System.out.println("P2P SuperNode is ready.");
 		} catch (Exception e) {
 			System.out.println(ConsoleColors.RED + "P2P SuperNode failed: " + e +
@@ -157,13 +152,11 @@ public class T1Application {
 				command = "";
 				FileTerminal.cleanFile(terminalPath);
 				System.out.println(
-						"Comandos para o SUPER NODO:  \n\tfind <nome do arquivo> \n\tdownload <ip>:<port> <hash> \n\tall \n\texit");
+						"Comandos para o SUPER NODO: \n[ find <nome do arquivo> ]\n[ download <ip>:<port> <hash> ]\n[ all ]\n[ exit ]");
 
 				while (command == null || command.equalsIgnoreCase("")) {
 					command = FileTerminal.inputFile(terminalPath);
 				}
-				// FileTerminal.cleanFile(terminalPath);
-				// System.out.println("command -> " + command);
 				String[] exec = command.split(" ");
 				switch (exec[0]) {
 					case "find":
