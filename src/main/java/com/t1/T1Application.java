@@ -23,6 +23,8 @@ public class T1Application {
 
 	private static String nodeIp;
 
+	private static String hashRange;
+
 	private static int nodePort;
 
 	public static void main(String[] args) throws InterruptedException, IOException {
@@ -32,6 +34,7 @@ public class T1Application {
 			superNodeIp = System.getenv("ip");
 			superNodePort = Integer.parseInt(System.getenv("port"));
 			nextSuperNodeIp = System.getenv("nextIp");
+			hashRange = System.getenv("hashRange");
 
 			SuperNodeCreate();
 		} else {
@@ -59,7 +62,7 @@ public class T1Application {
 			// Registrando Rotas
 			String server = "rmi://" + superNodeIp + ":" + superNodePort + "/SuperNode";
 			SuperNodeInterface superNode = new SuperNode(superNodeIp, superNodePort,
-					nextSuperNodeIp);
+					nextSuperNodeIp, hashRange);
 			Naming.rebind(server, superNode);
 			superNode.connectNext();
 			System.out.println("P2P SuperNode is ready.");
@@ -104,10 +107,10 @@ public class T1Application {
 			if (listOfFiles[i].isFile()) {
 				int hash = calculateHash(listOfFiles[i].getName());
 				resources.put(hash, listOfFiles[i].getName());
-				System.out.println("File " + listOfFiles[i].getName() + " -> " + hash);
-			} else if (listOfFiles[i].isDirectory()) {
-				System.out.println("Directory " + listOfFiles[i].getName());
-			}
+				// System.out.println("File " + listOfFiles[i].getName());
+			} // else if (listOfFiles[i].isDirectory()) {
+				// System.out.println("Directory " + listOfFiles[i].getName());
+				// }
 		}
 
 		return resources;

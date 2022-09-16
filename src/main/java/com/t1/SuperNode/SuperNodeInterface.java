@@ -11,6 +11,9 @@ public interface SuperNodeInterface extends Remote {
 
     public String register(String ip, int port, ConcurrentHashMap<Integer, String> resources) throws RemoteException;
 
+    public void findRightSuperNodeToStoreHash(String node, ConcurrentHashMap<Integer, String> specificResource,
+            String hashBetween) throws RemoteException;
+
     public String findHandler(String fileName) throws RemoteException;
 
     public String allHandler() throws RemoteException;

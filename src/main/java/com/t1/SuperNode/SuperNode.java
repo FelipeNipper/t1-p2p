@@ -14,7 +14,7 @@ import java.rmi.Naming;
 public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface {
 
 	// mapa de ip+port que devolve um mapa de recursos (hash, nome)
-	protected ConcurrentHashMap<String, ConcurrentHashMap<Integer, String>> myNodes;
+	protected ConcurrentHashMap<String, ConcurrentHashMap<Integer, String>> myResources;
 
 	// mapa de ip+port que devolve quanto tempo o nodo esta sem mandar KeepAlive
 	protected ConcurrentHashMap<String, Integer> nodesTimeout;
@@ -30,13 +30,16 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 
 	protected String nextAddr;
 
-	public SuperNode(String myAddr, int port, String nextAddr) throws RemoteException {
-		myNodes = new ConcurrentHashMap<>();
+	protected String hashRange;
+
+	public SuperNode(String myAddr, int port, String nextAddr, String hashRange) throws RemoteException {
+		myResources = new ConcurrentHashMap<>();
 		nodesTimeout = new ConcurrentHashMap<>();
 		nodesResponses = new ConcurrentHashMap<>();
 		this.myAddr = myAddr;
 		this.port = port;
 		this.nextAddr = nextAddr;
+		this.hashRange = hashRange;
 		new Thread(() -> {
 			while (true) {
 				KeepAliveController();
@@ -78,14 +81,32 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	 */
 	public String register(String ip, int port, ConcurrentHashMap<Integer, String> resources) throws RemoteException {
 		System.out.println("Registrando o Node no SuperNode");
-		String node = "";
-		try {
-			node = ip + ":" + port;
-			myNodes.put(node, resources);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		String node = ip + ":" + port;
+		// myResources.put(node, resources); // calcular para ver em qual supernode vai
+		// ficar a hash
+		resources.forEach((hash, fileName) -> {
+			try {
+
+				ConcurrentHashMap<Integer, String> specificResource = new ConcurrentHashMap<>();
+				specificResource.put(hash, fileName);
+				int hashBetween = hash % 4;
+				nextSuperNode.findRightSuperNodeToStoreHash(node, specificResource, "" + hashBetween);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+
 		return node;
+	}
+
+	public void findRightSuperNodeToStoreHash(String node, ConcurrentHashMap<Integer, String> specificResource,
+			String hashBetween)
+			throws RemoteException {
+		if (!hashRange.equalsIgnoreCase(hashBetween)) {
+			nextSuperNode.findRightSuperNodeToStoreHash(node, specificResource, hashBetween);
+		} else {
+			myResources.put(node, specificResource);
+		}
 	}
 
 	// Faz o find
@@ -112,7 +133,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		ConcurrentHashMap<String, String> response = new ConcurrentHashMap<>();
 		try {
 			System.out.println("Buscando no proximo");
-			this.nextSuperNode.sendResourceForNextNode(resourceName, myAddr, response);
+			nextSuperNode.sendResourceForNextNode(resourceName, myAddr, response);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -142,7 +163,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	public ConcurrentHashMap<String, String> findResourceInThisNode(String resourceName,
 			ConcurrentHashMap<String, String> resourceNodes) {
 
-		myNodes.forEach((addr, resources) -> {
+		myResources.forEach((addr, resources) -> {
 			resources.forEach((hash, name) -> {
 				if (name.contains(resourceName)) {
 					if (resourceNodes.containsKey(addr)) {
@@ -214,7 +235,7 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	}
 
 	public void disconnect(String id) {
-		myNodes.remove(id);
+		myResources.remove(id);
 	}
 
 	public void KeepAlive(String id) throws RemoteException {

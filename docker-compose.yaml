@@ -12,6 +12,7 @@ services:
       - port=9000
       - ip=10.1.1.1
       - nextIp=10.1.1.2
+      - hashRange=0
     entrypoint: java -jar build/libs/t1-p2p-1.jar
 
   super-node-2:
@@ -25,6 +26,7 @@ services:
       - port=9000
       - ip=10.1.1.2
       - nextIp=10.1.1.3
+      - hashRange=1
     entrypoint: java -jar build/libs/t1-p2p-1.jar
 
   super-node-3:
@@ -38,6 +40,7 @@ services:
       - port=9000
       - ip=10.1.1.3
       - nextIp=10.1.1.4
+      - hashRange=2
     entrypoint: java -jar build/libs/t1-p2p-1.jar
 
   super-node-4:
@@ -51,6 +54,7 @@ services:
       - port=9000
       - ip=10.1.1.4
       - nextIp=10.1.1.1
+      - hashRange=3
     entrypoint: java -jar build/libs/t1-p2p-1.jar
 
   node-1:
