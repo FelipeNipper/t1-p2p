@@ -63,7 +63,7 @@ public class T1Application {
 			// Registrando Rotas
 			String server = "rmi://" + superNodeIp + ":" + superNodePort + "/SuperNode";
 			// SuperNodeInterface superNode = new SuperNode(superNodeIp, superNodePort,
-			// 		nextSuperNodeIp, hasToken);
+			// nextSuperNodeIp, hasToken);
 			Naming.rebind(server, new SuperNode(superNodeIp, superNodePort,
 					nextSuperNodeIp, hasToken));
 			// superNode.connectNext();
@@ -138,61 +138,62 @@ public class T1Application {
 	 */
 
 	public static void testeee() throws IOException {
-		String command = "";
+		String command;
 		String terminalPath = "src/main/java/com/t1/Terminal/Node1.txt";
+		// while (true) {
+		// command = "";
+		// System.out.println(
+		// "Comandos para o SUPER NODO: \n[ find <nome do arquivo> ]\n[ download
+		// <ip>:<port> <hash> ]\n[ all ]\n[ exit ]");
+		// // command = in.nextLine();
+		// while (command == null || command.equalsIgnoreCase("")) {
+		// command = FileTerminal.inputFile(terminalPath);
+		// }
+		// System.out.println("sad " + command);
+		// }
+
 		while (true) {
-			System.out.println(
-					"Comandos para o SUPER NODO:  \n[ find <nome do arquivo> ]\n[ download <ip>:<port> <hash> ]\n[ all ]\n[ exit ]");
-			// command = in.nextLine();
-			while (command == null || command.equalsIgnoreCase("")) {
-				command = FileTerminal.inputFile("src/main/java/com/t1/Terminal/Node1.txt");
+			try {
+				command = "";
+				FileTerminal.cleanFile(terminalPath);
+				System.out.println(
+						"Comandos para o SUPER NODO:  \n\tfind <nome do arquivo> \n\tdownload <ip>:<port> <hash> \n\tall \n\texit");
+
+				while (command == null || command.equalsIgnoreCase("")) {
+					command = FileTerminal.inputFile(terminalPath);
+				}
+				// FileTerminal.cleanFile(terminalPath);
+				// System.out.println("command -> " + command);
+				String[] exec = command.split(" ");
+				switch (exec[0]) {
+					case "find":
+						// System.out.println("Response => " + mySuperNode.findHandler(exec[1]));
+						System.out.println("find");
+						break;
+					case "download":
+						System.out.println("download");
+
+						// downloadFile(exec[1], Integer.parseInt(exec[2]));
+						break;
+					case "all":
+						System.out.println("all");
+
+						// mySuperNode.getAllHash()
+						break;
+					case "exit":
+						System.out.println("exit");
+
+						// fazer desconectar
+						return;
+					default:
+						System.out.println(ConsoleColors.RED + "Comando inválido: " + command +
+								ConsoleColors.RESET);
+				}
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+				return;
 			}
-			System.out.println("sad " + command);
 		}
-		/*
-		 * 
-		 * 
-		 * while (true) {
-		 * try {
-		 * System.out.println(
-		 * "Comandos para o SUPER NODO:  \n\tfind <nome do arquivo> \n\tdownload <ip>:<port> <hash> \n\tall \n\texit"
-		 * );
-		 * 
-		 * while (command == null || command.equalsIgnoreCase("")) {
-		 * command = FileTerminal.inputFile(terminalPath);
-		 * }
-		 * // FileTerminal.cleanFile(terminalPath);
-		 * // System.out.println("command -> " + command);
-		 * String[] exec = command.split(" ");
-		 * switch (exec[0]) {
-		 * case "find":
-		 * // System.out.println("Response => " + mySuperNode.findHandler(exec[1]));
-		 * System.out.println("find");
-		 * break;
-		 * case "download":
-		 * System.out.println("download");
-		 * 
-		 * // downloadFile(exec[1], Integer.parseInt(exec[2]));
-		 * break;
-		 * case "all":
-		 * System.out.println("all");
-		 * 
-		 * // mySuperNode.getAllHash()
-		 * break;
-		 * case "exit":
-		 * System.out.println("exit");
-		 * 
-		 * // fazer desconectar
-		 * return;
-		 * default:
-		 * System.out.println(ConsoleColors.RED + "Comando inválido: " + command +
-		 * ConsoleColors.RESET);
-		 * }
-		 * } catch (Exception e) {
-		 * System.out.println(e.getMessage());
-		 * return;
-		 * }
-		 * }
-		 */
+
 	}
 }

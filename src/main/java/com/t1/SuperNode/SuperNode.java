@@ -40,19 +40,14 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 		this.port = port;
 		this.nextAddr = nextAddr;
 		this.hasToken = hasToken;
-		superNode.connectNext();
 		new Thread(() -> {
 			while (true) {
 				KeepAliveController();
 				try {
 					Thread.sleep(10000);
-				} catch (InterruptedException e) {
+					connectNext();
+				} catch (Exception e) {
 					e.printStackTrace();
-				}
-				if (hasToken) {
-					hasToken = false;
-					System.out.println("PASSANDO TOKEN");
-					nextSuperNode.sendToken();
 				}
 			}
 		}).start();
