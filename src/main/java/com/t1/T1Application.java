@@ -3,10 +3,7 @@ package com.t1;
 import java.io.File;
 import java.io.IOException;
 import java.rmi.Naming;
-import java.rmi.NotBoundException;
 import java.rmi.registry.LocateRegistry;
-import java.util.HashMap;
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.t1.Node.Node;
@@ -27,11 +24,11 @@ public class T1Application {
 
 	private static int nodePort;
 
-	private static int minHash = Integer.MIN_VALUE;
+	private static double minHash = Integer.MIN_VALUE;
 
-	private static int rangeHash;
+	private static double rangeHash;
 
-	private static int superNodeSpace;
+	private static double superNodeSpace;
 
 	private static double totalHash = 4294967296.0;
 
@@ -40,8 +37,9 @@ public class T1Application {
 		// SuperNode
 		if (System.getenv("type").equalsIgnoreCase("SuperNode")) {
 			int numSuperNode = 4;
-			rangeHash = (int) totalHash / numSuperNode;
-			superNodeSpace = (rangeHash * Integer.parseInt(System.getenv("position"))) + minHash;
+			rangeHash = totalHash / numSuperNode;
+			superNodeSpace = (int) (rangeHash *
+					Integer.parseInt(System.getenv("position"))) + minHash;
 
 			superNodeIp = System.getenv("ip");
 			superNodePort = Integer.parseInt(System.getenv("port"));
@@ -90,7 +88,6 @@ public class T1Application {
 						"-----------> Criando node com os seus arquivos <----------"
 						+ ConsoleColors.RESET + "\n");
 
-		// String dir = System.getenv("dir");
 		String dirPath = "src/main/java/com/t1/Resources/" + System.getenv("dir");
 		String terminalPath = "src/main/java/com/t1/Terminal/" +
 				System.getenv("terminal") + ".txt";
