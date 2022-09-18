@@ -69,7 +69,7 @@ services:
       - port=9000
       - superNodeIp=10.1.1.1
       - superNodePort=9000
-      - dir=Node1Dir
+      - dir=dir1
       - terminal=Node1
     volumes:
       - type: bind

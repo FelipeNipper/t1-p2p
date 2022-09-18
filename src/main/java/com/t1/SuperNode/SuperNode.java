@@ -1,10 +1,7 @@
 package com.t1.SuperNode;
 
 import java.rmi.RemoteException;
-import java.rmi.server.RemoteServer;
-import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.t1.ConsoleColors;
@@ -28,13 +25,13 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 
 	protected int port;
 
-	protected int minHash;
+	protected double minHash;
 
-	protected int maxHash;
+	protected double maxHash;
 
 	protected String nextAddr;
 
-	public SuperNode(String myAddr, int port, String nextAddr, int minHash, int maxHash) throws RemoteException {
+	public SuperNode(String myAddr, int port, String nextAddr, double minHash, double maxHash) throws RemoteException {
 		myResources = new ConcurrentHashMap<>();
 		nodesTimeout = new ConcurrentHashMap<>();
 		nodesResponses = new ConcurrentHashMap<>();
@@ -84,8 +81,6 @@ public class SuperNode extends UnicastRemoteObject implements SuperNodeInterface
 	 */
 	public String register(String ip, int port, ConcurrentHashMap<Integer, String> resources) throws RemoteException {
 		String node = ip + ":" + port;
-		// myResources.put(node, resources); // calcular para ver em qual supernode vai
-		// ficar a hash
 		resources.forEach((hash, fileName) -> {
 			try {
 				ConcurrentHashMap<Integer, String> specificResource = new ConcurrentHashMap<>();

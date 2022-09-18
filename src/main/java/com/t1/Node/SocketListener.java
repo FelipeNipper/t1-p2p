@@ -12,7 +12,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SocketListener extends Thread {

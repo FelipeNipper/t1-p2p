@@ -9,7 +9,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.rmi.Naming;
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.t1.ConsoleColors;

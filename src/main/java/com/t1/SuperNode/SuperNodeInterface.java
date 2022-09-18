@@ -2,7 +2,6 @@ package com.t1.SuperNode;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public interface SuperNodeInterface extends Remote {
